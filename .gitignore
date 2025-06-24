@@ -1,0 +1,7 @@
+# C-sharp and Visual Studio
+ReceiptScanner/bin/*
+ReceiptScanner/obj/*
+ReceiptScannerTests/bin/*
+ReceiptScannerTests/obj/*
+TestResults/*
+.vs

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt Scanner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .upload-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .file-input {
+            margin: 20px 0;
+        }
+        .scan-button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .scan-button:hover {
+            background-color: #0056b3;
+        }
+        .scan-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result-section {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .text-detection {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-left: 4px solid #007bff;
+        }
+        .text-content {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .confidence {
+            color: #666;
+            font-size: 14px;
+        }
+        .bounding-box {
+            color: #888;
+            font-size: 12px;
+            font-family: monospace;
+        }
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Receipt Scanner</h1>
+        
+        <div class="upload-section">
+            <p>Upload a receipt image to extract text and detect bounding boxes.</p>
+            <input type="file" id="imageInput" accept="image/*" class="file-input">
+            <br>
+            <button id="scanButton" class="scan-button" onclick="scanReceipt()">Scan Receipt</button>
+        </div>
+
+        <div id="imagePreview"></div>
+        <div id="resultSection" class="result-section" style="display: none;">
+            <h3>Scan Results:</h3>
+            <div id="results"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentApiUrl = window.location.origin;
+
+        function scanReceipt() {
+            const fileInput = document.getElementById('imageInput');
+            const scanButton = document.getElementById('scanButton');
+            const resultSection = document.getElementById('resultSection');
+            const results = document.getElementById('results');
+
+            if (!fileInput.files[0]) {
+                alert('Please select an image file first.');
+                return;
+            }
+
+            // Disable button and show loading
+            scanButton.disabled = true;
+            scanButton.textContent = 'Scanning...';
+            resultSection.style.display = 'none';
+            results.innerHTML = '<div class="loading">Processing image...</div>';
+
+            const formData = new FormData();
+            formData.append('imageFile', fileInput.files[0]);
+
+            fetch(`${currentApiUrl}/scan`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                displayResults(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                results.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            })
+            .finally(() => {
+                scanButton.disabled = false;
+                scanButton.textContent = 'Scan Receipt';
+                resultSection.style.display = 'block';
+            });
+        }
+
+        function displayResults(data) {
+            const results = document.getElementById('results');
+            
+            if (data.error) {
+                results.innerHTML = `<div class="error">Error: ${data.error}</div>`;
+                return;
+            }
+
+            if (!data.detectedTexts || data.detectedTexts.length === 0) {
+                results.innerHTML = '<div class="loading">No text detected in the image.</div>';
+                return;
+            }
+
+            let html = '';
+            data.detectedTexts.forEach((detection, index) => {
+                html += `
+                    <div class="text-detection">
+                        <div class="text-content">${detection.text}</div>
+                        <div class="confidence">Confidence: ${(detection.confidence * 100).toFixed(1)}%</div>
+                        <div class="bounding-box">Bounding Box: ${detection.boundingBox.map(p => `(${p.x}, ${p.y})`).join(' → ')}</div>
+                    </div>
+                `;
+            });
+
+            results.innerHTML = html;
+        }
+
+        // Preview image when selected
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('imagePreview');
+                    preview.innerHTML = `<img src="${e.target.result}" class="preview-image" alt="Preview">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
+</html> 

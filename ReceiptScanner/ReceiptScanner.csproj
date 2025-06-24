@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.22.0" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\Frontend\ReceiptScannerFrontend.html" />
+    <None Remove="Resources\ic15_dict.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Frontend\ReceiptScannerFrontend.html" />
+    <EmbeddedResource Include="Resources\ic15_dict.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Resources\Models\" />
+  </ItemGroup>
+
+</Project> 
