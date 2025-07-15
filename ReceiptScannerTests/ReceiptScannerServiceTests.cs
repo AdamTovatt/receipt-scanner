@@ -14,12 +14,12 @@ namespace ReceiptScannerTests
         public void InspectOnnxModel_PrintModelInfo()
         {
             // Arrange
-            ResourceHelper resourceHelper = ResourceHelper.Instance;
+            ResourceManager resourceManager = ResourceManager.Instance;
 
             try
             {
                 // Load model bytes
-                byte[] modelBytes = resourceHelper.ReadAsBytesAsync(Resources.Models.ReceiptModel).Result;
+                byte[] modelBytes = resourceManager.ReadAsBytesAsync(Resources.Models.ReceiptModel).Result;
                 Console.WriteLine($"Model size: {modelBytes.Length / (1024 * 1024):F2} MB");
 
                 // Create inference session to inspect model

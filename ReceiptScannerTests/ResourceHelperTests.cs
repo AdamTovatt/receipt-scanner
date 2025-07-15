@@ -9,13 +9,15 @@ namespace ReceiptScannerTests
     public class ResourceHelperTests
     {
         [TestMethod]
-        public void ResourceHelper_Instance_IsSingleton()
+        public void ResourceManager_GetInstance_ReturnsSameInstanceForSameAssembly()
         {
             // Arrange & Act
-            ResourceHelper instance1 = ResourceHelper.Instance;
-            ResourceHelper instance2 = ResourceHelper.Instance;
+            ResourceManager instance1 = ResourceManager.GetInstance();
+            ResourceManager instance2 = ResourceManager.GetInstance();
 
             // Assert
+            Assert.IsNotNull(instance1);
+            Assert.IsNotNull(instance2);
             Assert.AreSame(instance1, instance2);
         }
 
@@ -23,31 +25,31 @@ namespace ReceiptScannerTests
         public void GetContentType_WithValidExtensions_ReturnsCorrectContentType()
         {
             // Arrange
-            ResourceHelper helper = ResourceHelper.Instance;
+            ResourceManager manager = ResourceManager.GetInstance();
 
             // Act & Assert
-            Assert.AreEqual("text/html", helper.GetContentType(Resource.Create("test.html")));
-            Assert.AreEqual("font/otf", helper.GetContentType(Resource.Create("test.otf")));
-            Assert.AreEqual("font/ttf", helper.GetContentType(Resource.Create("test.ttf")));
-            Assert.AreEqual("image/svg+xml", helper.GetContentType(Resource.Create("test.svg")));
-            Assert.AreEqual("image/png", helper.GetContentType(Resource.Create("test.png")));
-            Assert.AreEqual("image/jpeg", helper.GetContentType(Resource.Create("test.jpg")));
-            Assert.AreEqual("text/plain", helper.GetContentType(Resource.Create("test.txt")));
-            Assert.AreEqual("application/pdf", helper.GetContentType(Resource.Create("test.pdf")));
-            Assert.AreEqual("application/x-x509-ca-cert", helper.GetContentType(Resource.Create("test.cer")));
-            Assert.AreEqual("application/octet-stream", helper.GetContentType(Resource.Create("test.onnx")));
-            Assert.AreEqual("application/octet-stream", helper.GetContentType(Resource.Create("test.unknown")));
+            Assert.AreEqual("text/html", manager.GetContentType(Resource.Create("test.html")));
+            Assert.AreEqual("font/otf", manager.GetContentType(Resource.Create("test.otf")));
+            Assert.AreEqual("font/ttf", manager.GetContentType(Resource.Create("test.ttf")));
+            Assert.AreEqual("image/svg+xml", manager.GetContentType(Resource.Create("test.svg")));
+            Assert.AreEqual("image/png", manager.GetContentType(Resource.Create("test.png")));
+            Assert.AreEqual("image/jpeg", manager.GetContentType(Resource.Create("test.jpg")));
+            Assert.AreEqual("text/plain", manager.GetContentType(Resource.Create("test.txt")));
+            Assert.AreEqual("application/pdf", manager.GetContentType(Resource.Create("test.pdf")));
+            Assert.AreEqual("application/x-x509-ca-cert", manager.GetContentType(Resource.Create("test.cer")));
+            Assert.AreEqual("application/octet-stream", manager.GetContentType(Resource.Create("test.onnx")));
+            Assert.AreEqual("application/octet-stream", manager.GetContentType(Resource.Create("test.unknown")));
         }
 
         [TestMethod]
         public void GetContentType_WithUppercaseExtensions_ReturnsCorrectContentType()
         {
             // Arrange
-            ResourceHelper helper = ResourceHelper.Instance;
+            ResourceManager manager = ResourceManager.GetInstance();
 
             // Act & Assert
-            Assert.AreEqual("text/html", helper.GetContentType(Resource.Create("test.HTML")));
-            Assert.AreEqual("image/png", helper.GetContentType(Resource.Create("test.PNG")));
+            Assert.AreEqual("text/html", manager.GetContentType(Resource.Create("test.HTML")));
+            Assert.AreEqual("image/png", manager.GetContentType(Resource.Create("test.PNG")));
         }
 
         [TestMethod]
@@ -95,12 +97,12 @@ namespace ReceiptScannerTests
         public void VerifyResourceMappings_WithValidResources_DoesNotThrow()
         {
             // Arrange
-            ResourceHelper helper = ResourceHelper.Instance;
+            ResourceManager manager = ResourceManager.Instance;
 
             // Act & Assert
             try
             {
-                helper.VerifyResourceMappings();
+                manager.VerifyResourceMappings();
                 // If no exception is thrown, the test passes
                 Assert.IsTrue(true);
             }
@@ -126,11 +128,11 @@ namespace ReceiptScannerTests
         public void ReceiptModel_ContentType_IsCorrect()
         {
             // Arrange
-            ResourceHelper helper = ResourceHelper.Instance;
+            ResourceManager manager = ResourceManager.Instance;
             Resource receiptModel = Resources.Models.ReceiptModel;
 
             // Act
-            string contentType = helper.GetContentType(receiptModel);
+            string contentType = manager.GetContentType(receiptModel);
 
             // Assert
             Assert.AreEqual("application/octet-stream", contentType);
@@ -152,11 +154,11 @@ namespace ReceiptScannerTests
         public void Frontend_ContentType_IsCorrect()
         {
             // Arrange
-            ResourceHelper helper = ResourceHelper.Instance;
+            ResourceManager manager = ResourceManager.Instance;
             Resource frontend = Resources.Frontend.ReceiptScannerFrontend;
 
             // Act
-            string contentType = helper.GetContentType(frontend);
+            string contentType = manager.GetContentType(frontend);
 
             // Assert
             Assert.AreEqual("text/html", contentType);
@@ -171,7 +173,7 @@ namespace ReceiptScannerTests
             // Act & Assert
             try
             {
-                string content = await ResourceHelper.Instance.ReadAsStringAsync(resource);
+                string content = await ResourceManager.Instance.ReadAsStringAsync(resource);
                 Assert.IsFalse(string.IsNullOrEmpty(content));
                 Assert.IsTrue(content.Contains("<!DOCTYPE html>"));
             }
@@ -190,7 +192,7 @@ namespace ReceiptScannerTests
             // Act & Assert
             try
             {
-                byte[] bytes = await ResourceHelper.Instance.ReadAsBytesAsync(resource);
+                byte[] bytes = await ResourceManager.Instance.ReadAsBytesAsync(resource);
                 Assert.IsTrue(bytes.Length > 0);
                 // ONNX files should start with specific magic bytes
                 Assert.IsTrue(bytes.Length > 8);
@@ -210,7 +212,7 @@ namespace ReceiptScannerTests
             // Act & Assert
             await Assert.ThrowsExceptionAsync<FileNotFoundException>(async () =>
             {
-                await ResourceHelper.Instance.ReadAsStringAsync(resource);
+                await ResourceManager.Instance.ReadAsStringAsync(resource);
             });
         }
 
@@ -223,7 +225,7 @@ namespace ReceiptScannerTests
             // Act & Assert
             await Assert.ThrowsExceptionAsync<FileNotFoundException>(async () =>
             {
-                await ResourceHelper.Instance.ReadAsBytesAsync(resource);
+                await ResourceManager.Instance.ReadAsBytesAsync(resource);
             });
         }
     }

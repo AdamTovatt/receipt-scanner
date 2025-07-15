@@ -20,7 +20,7 @@ namespace ReceiptScanner.Controllers
         {
             try
             {
-                string htmlContent = ResourceHelper.Instance.ReadAsStringAsync(Resources.Frontend.ReceiptScannerFrontend).Result;
+                string htmlContent = ResourceManager.GetInstance().ReadAsStringAsync(Resources.Frontend.ReceiptScannerFrontend).Result;
                 
                 // Get the external URL from forwarded headers, but hardcode https
                 string scheme = "https"; // Hardcoded to fix mixed content

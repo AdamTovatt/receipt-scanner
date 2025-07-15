@@ -30,7 +30,7 @@ namespace ReceiptScanner.Services
 
         private List<string> LoadCharacterDict()
         {
-            string dictContent = ResourceHelper.Instance.ReadAsStringAsync(Resources.Dictionaries.IC15Dict).Result;
+            string dictContent = ResourceManager.GetInstance().ReadAsStringAsync(Resources.Dictionaries.IC15Dict).Result;
             return dictContent.Split('\n', StringSplitOptions.RemoveEmptyEntries).ToList();
         }
 

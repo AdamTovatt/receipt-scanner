@@ -26,7 +26,7 @@ namespace ReceiptScanner.Services
                     return _model;
                 }
 
-                byte[] modelBytes = await ResourceHelper.Instance.ReadAsBytesAsync(Resources.Models.ReceiptModel);
+                byte[] modelBytes = await ResourceManager.GetInstance().ReadAsBytesAsync(Resources.Models.ReceiptModel);
                 _modelBytes = modelBytes;
                 _model = new InferenceSession(modelBytes);
                 return _model;

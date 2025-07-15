@@ -12,7 +12,7 @@ namespace ReceiptScannerTests
         public async Task ProcessImageAsync_WithTestReceipt_DetectsText()
         {
             // Arrange
-            ResourceHelper resourceHelper = ResourceHelper.Instance;
+            ResourceManager resourceManager = ResourceManager.Instance;
             TestResourceHelper testResourceHelper = TestResourceHelper.Instance;
 
             // Load the test receipt image

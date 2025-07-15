@@ -8,19 +8,41 @@ namespace EasyReasy
     /// </summary>
     public class ResourceManager
     {
-        private static readonly Lazy<ResourceManager> instance = new Lazy<ResourceManager>(() => new ResourceManager());
-        
-        /// <summary>
-        /// Gets the singleton instance of the resource manager.
-        /// </summary>
-        public static ResourceManager Instance => instance.Value;
+        private static readonly Dictionary<Assembly, ResourceManager> instances = new Dictionary<Assembly, ResourceManager>();
+        private static readonly object lockObject = new object();
 
         private readonly Dictionary<Type, IResourceProvider> providers = new Dictionary<Type, IResourceProvider>();
         private readonly Dictionary<Type, List<Resource>> resourceCollections = new Dictionary<Type, List<Resource>>();
+        private readonly Assembly assembly;
 
-        private ResourceManager()
+        /// <summary>
+        /// Gets the singleton instance of the resource manager for the specified assembly.
+        /// </summary>
+        /// <param name="assembly">The assembly to discover resource collections from. If null, uses the executing assembly.</param>
+        /// <returns>The resource manager instance for the specified assembly.</returns>
+        public static ResourceManager GetInstance(Assembly? assembly = null)
         {
-            DiscoverResourceCollections();
+            assembly ??= Assembly.GetExecutingAssembly();
+
+            lock (lockObject)
+            {
+                if (!instances.ContainsKey(assembly))
+                {
+                    ResourceManager instance = new ResourceManager(assembly);
+                    instance.DiscoverResourceCollections();
+                    instances[assembly] = instance;
+                }
+                return instances[assembly];
+            }
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ResourceManager"/> class.
+        /// </summary>
+        /// <param name="assembly">The assembly to discover resource collections from.</param>
+        private ResourceManager(Assembly assembly)
+        {
+            this.assembly = assembly;
         }
 
         /// <summary>
@@ -133,8 +155,6 @@ namespace EasyReasy
 
         private void DiscoverResourceCollections()
         {
-            Assembly assembly = Assembly.GetExecutingAssembly();
-            
             foreach (Type type in assembly.GetTypes())
             {
                 ResourceCollectionAttribute? attribute = type.GetCustomAttribute<ResourceCollectionAttribute>();
@@ -142,7 +162,7 @@ namespace EasyReasy
                 {
                     // Find all static Resource fields in this type
                     List<Resource> resources = new List<Resource>();
-                    
+
                     foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.Static))
                     {
                         if (field.FieldType == typeof(Resource))
@@ -156,7 +176,7 @@ namespace EasyReasy
                     }
 
                     resourceCollections[type] = resources;
-                    
+
                     // Auto-register the provider if it's a concrete type
                     if (attribute.ProviderType.IsClass && !attribute.ProviderType.IsAbstract)
                     {
@@ -178,12 +198,12 @@ namespace EasyReasy
                     {
                         return provider;
                     }
-                    
+
                     throw new InvalidOperationException($"No provider registered for resource collection: {collection.Key.Name}");
                 }
             }
-            
+
             throw new InvalidOperationException($"Resource not found in any collection: {resource.Path}");
         }
     }
-} 
+}
