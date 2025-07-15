@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Http;
 using Moq;
 using ReceiptScanner.Models;
 using ReceiptScanner.Services;
-using ReceiptScanner.Resources;
 using Microsoft.ML.OnnxRuntime;
+using ReceiptScanner;
 
 namespace ReceiptScannerTests
 {
@@ -19,7 +19,7 @@ namespace ReceiptScannerTests
             try
             {
                 // Load model bytes
-                byte[] modelBytes = resourceHelper.ReadAsBytesAsync(Resource.Models.ReceiptModel).Result;
+                byte[] modelBytes = resourceHelper.ReadAsBytesAsync(Resources.Models.ReceiptModel).Result;
                 Console.WriteLine($"Model size: {modelBytes.Length / (1024 * 1024):F2} MB");
 
                 // Create inference session to inspect model

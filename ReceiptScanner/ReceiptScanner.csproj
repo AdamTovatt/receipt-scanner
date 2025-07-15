@@ -7,6 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Resources\Models\**" />
+    <Content Remove="Resources\Models\**" />
+    <EmbeddedResource Remove="Resources\Models\**" />
+    <None Remove="Resources\Models\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ByteShelfClient" Version="1.2.2" />
+    <PackageReference Include="ByteShelfCommon" Version="1.2.2" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.22.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.10" />
   </ItemGroup>
@@ -22,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Resources\Models\" />
+    <ProjectReference Include="..\EasyReasy\EasyReasy.csproj" />
   </ItemGroup>
 
 </Project> 

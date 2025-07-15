@@ -1,5 +1,4 @@
 using ReceiptScanner.Models;
-using ReceiptScanner.Resources;
 using ReceiptScanner.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,7 +20,7 @@ namespace ReceiptScanner.Controllers
         {
             try
             {
-                string htmlContent = ResourceHelper.Instance.ReadAsStringAsync(Resource.Frontend.ReceiptScannerFrontend).Result;
+                string htmlContent = ResourceHelper.Instance.ReadAsStringAsync(Resources.Frontend.ReceiptScannerFrontend).Result;
                 
                 // Get the external URL from forwarded headers, but hardcode https
                 string scheme = "https"; // Hardcoded to fix mixed content

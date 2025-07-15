@@ -1,8 +1,7 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ReceiptScanner.Models;
 using ReceiptScanner.Services;
-using ReceiptScanner.Resources;
-using System.Reflection;
+using ReceiptScanner;
+using EasyReasy;
 
 namespace ReceiptScannerTests
 {
@@ -15,13 +14,13 @@ namespace ReceiptScannerTests
             // Arrange
             ResourceHelper resourceHelper = ResourceHelper.Instance;
             TestResourceHelper testResourceHelper = TestResourceHelper.Instance;
-            
+
             // Load the test receipt image
             byte[] imageBytes = testResourceHelper.ReadAsBytesAsync(TestResource.TestFiles.TestReceipt01).Result;
             using MemoryStream imageStream = new MemoryStream(imageBytes);
-            
+
             // Load the model
-            byte[] modelBytes = resourceHelper.ReadAsBytesAsync(Resource.Models.ReceiptModel).Result;
+            byte[] modelBytes = resourceHelper.ReadAsBytesAsync(Resources.Models.ReceiptModel).Result;
             using PGNetPredictor predictor = new PGNetPredictor(modelBytes);
 
             // Act
@@ -29,7 +28,7 @@ namespace ReceiptScannerTests
 
             // Assert
             Assert.IsNotNull(result);
-            
+
             if (!string.IsNullOrEmpty(result.Error))
             {
                 // If there's an error, print it for debugging but don't fail the test yet
@@ -54,7 +53,7 @@ namespace ReceiptScannerTests
 
             // TODO: Replace this with actual expected text from your receipt
             // For now, just check that we got some text
-            bool hasExpectedText = result.DetectedTexts.Any(detection => 
+            bool hasExpectedText = result.DetectedTexts.Any(detection =>
                 detection.Text.Contains("STORE", StringComparison.OrdinalIgnoreCase) ||
                 detection.Text.Contains("TOTAL", StringComparison.OrdinalIgnoreCase) ||
                 detection.Text.Contains("$", StringComparison.OrdinalIgnoreCase) ||
@@ -83,13 +82,13 @@ namespace ReceiptScannerTests
             // Arrange
             ResourceHelper resourceHelper = ResourceHelper.Instance;
             TestResourceHelper testResourceHelper = TestResourceHelper.Instance;
-            
+
             // Load the test receipt image
             byte[] imageBytes = testResourceHelper.ReadAsBytesAsync(TestResource.TestFiles.TestReceipt01).Result;
             using MemoryStream imageStream = new MemoryStream(imageBytes);
-            
+
             // Load the model
-            byte[] modelBytes = resourceHelper.ReadAsBytesAsync(Resource.Models.ReceiptModel).Result;
+            byte[] modelBytes = resourceHelper.ReadAsBytesAsync(Resources.Models.ReceiptModel).Result;
             using PGNetPredictor predictor = new PGNetPredictor(modelBytes);
 
             // Act
@@ -97,7 +96,7 @@ namespace ReceiptScannerTests
 
             // Assert
             Assert.IsNotNull(result);
-            
+
             if (!string.IsNullOrEmpty(result.Error))
             {
                 Assert.Inconclusive($"OCR processing failed: {result.Error}");
@@ -109,7 +108,7 @@ namespace ReceiptScannerTests
             {
                 Assert.IsNotNull(detection.BoundingBox, "Bounding box should not be null");
                 Assert.IsTrue(detection.BoundingBox.Count >= 3, "Bounding box should have at least 3 points");
-                
+
                 // Check that coordinates are reasonable (not negative or extremely large)
                 foreach (Point point in detection.BoundingBox)
                 {
@@ -121,4 +120,4 @@ namespace ReceiptScannerTests
             }
         }
     }
-} 
+}

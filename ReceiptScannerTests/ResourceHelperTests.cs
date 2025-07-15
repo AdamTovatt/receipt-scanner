@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Text;
-using ReceiptScanner.Resources;
 using Microsoft.Extensions.FileProviders;
+using ReceiptScanner;
 
 namespace ReceiptScannerTests
 {
@@ -114,7 +114,7 @@ namespace ReceiptScannerTests
         public void ReceiptModel_Resource_IsCorrectlyDefined()
         {
             // Arrange
-            Resource receiptModel = Resource.Models.ReceiptModel;
+            Resource receiptModel = Resources.Models.ReceiptModel;
 
             // Act & Assert
             Assert.AreEqual("Models/pgnet.onnx", receiptModel.Path);
@@ -127,7 +127,7 @@ namespace ReceiptScannerTests
         {
             // Arrange
             ResourceHelper helper = ResourceHelper.Instance;
-            Resource receiptModel = Resource.Models.ReceiptModel;
+            Resource receiptModel = Resources.Models.ReceiptModel;
 
             // Act
             string contentType = helper.GetContentType(receiptModel);
@@ -140,7 +140,7 @@ namespace ReceiptScannerTests
         public void Frontend_Resource_IsCorrectlyDefined()
         {
             // Arrange
-            Resource frontend = Resource.Frontend.ReceiptScannerFrontend;
+            Resource frontend = Resources.Frontend.ReceiptScannerFrontend;
 
             // Act & Assert
             Assert.AreEqual("Frontend/ReceiptScannerFrontend.html", frontend.Path);
@@ -153,7 +153,7 @@ namespace ReceiptScannerTests
         {
             // Arrange
             ResourceHelper helper = ResourceHelper.Instance;
-            Resource frontend = Resource.Frontend.ReceiptScannerFrontend;
+            Resource frontend = Resources.Frontend.ReceiptScannerFrontend;
 
             // Act
             string contentType = helper.GetContentType(frontend);
@@ -166,7 +166,7 @@ namespace ReceiptScannerTests
         public async Task ReadAsStringAsync_ValidResource_ReturnsContent()
         {
             // Arrange
-            Resource resource = Resource.Frontend.ReceiptScannerFrontend;
+            Resource resource = Resources.Frontend.ReceiptScannerFrontend;
 
             // Act & Assert
             try
@@ -185,7 +185,7 @@ namespace ReceiptScannerTests
         public async Task ReadAsBytesAsync_ValidResource_ReturnsBytes()
         {
             // Arrange
-            Resource resource = Resource.Models.ReceiptModel;
+            Resource resource = Resources.Models.ReceiptModel;
 
             // Act & Assert
             try

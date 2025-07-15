@@ -4,7 +4,6 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using ReceiptScanner.Models;
-using ReceiptScanner.Resources;
 
 namespace ReceiptScanner.Services
 {
@@ -31,7 +30,7 @@ namespace ReceiptScanner.Services
 
         private List<string> LoadCharacterDict()
         {
-            string dictContent = ResourceHelper.Instance.ReadAsStringAsync(Resource.Dictionaries.IC15Dict).Result;
+            string dictContent = ResourceHelper.Instance.ReadAsStringAsync(Resources.Dictionaries.IC15Dict).Result;
             return dictContent.Split('\n', StringSplitOptions.RemoveEmptyEntries).ToList();
         }
 
