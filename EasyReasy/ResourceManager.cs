@@ -8,32 +8,22 @@ namespace EasyReasy
     /// </summary>
     public class ResourceManager
     {
-        private static readonly Dictionary<Assembly, ResourceManager> instances = new Dictionary<Assembly, ResourceManager>();
-        private static readonly object lockObject = new object();
-
         private readonly Dictionary<Type, IResourceProvider> providers = new Dictionary<Type, IResourceProvider>();
         private readonly Dictionary<Type, List<Resource>> resourceCollections = new Dictionary<Type, List<Resource>>();
         private readonly Assembly assembly;
 
         /// <summary>
-        /// Gets the singleton instance of the resource manager for the specified assembly.
+        /// Creates a new instance of <see cref="ResourceManager"/> for the specified assembly.
         /// </summary>
         /// <param name="assembly">The assembly to discover resource collections from. If null, uses the executing assembly.</param>
-        /// <returns>The resource manager instance for the specified assembly.</returns>
-        public static ResourceManager GetInstance(Assembly? assembly = null)
+        /// <returns>A new <see cref="ResourceManager"/> instance.</returns>
+        public static ResourceManager CreateInstance(Assembly? assembly = null)
         {
             assembly ??= Assembly.GetExecutingAssembly();
-
-            lock (lockObject)
-            {
-                if (!instances.ContainsKey(assembly))
-                {
-                    ResourceManager instance = new ResourceManager(assembly);
-                    instance.DiscoverResourceCollections();
-                    instances[assembly] = instance;
-                }
-                return instances[assembly];
-            }
+            ResourceManager instance = new ResourceManager(assembly);
+            instance.DiscoverResourceCollections();
+            instance.VerifyResourceMappings();
+            return instance;
         }
 
         /// <summary>

@@ -8,19 +8,23 @@ namespace ReceiptScannerTests
     [TestClass]
     public class PGNetPredictorTests
     {
+        private static ResourceManager _resourceManager = null!;
+
+        [ClassInitialize]
+        public static void BeforeAll()
+        {
+            _resourceManager = ResourceManager.CreateInstance();
+        }
+
         [TestMethod]
         public async Task ProcessImageAsync_WithTestReceipt_DetectsText()
         {
-            // Arrange
-            ResourceManager resourceManager = ResourceManager.Instance;
-            TestResourceHelper testResourceHelper = TestResourceHelper.Instance;
-
             // Load the test receipt image
-            byte[] imageBytes = testResourceHelper.ReadAsBytesAsync(TestResource.TestFiles.TestReceipt01).Result;
+            byte[] imageBytes = _resourceManager.ReadAsBytesAsync(TestResources.TestFiles.TestReceipt01).Result;
             using MemoryStream imageStream = new MemoryStream(imageBytes);
 
             // Load the model
-            byte[] modelBytes = resourceHelper.ReadAsBytesAsync(Resources.Models.ReceiptModel).Result;
+            byte[] modelBytes = _resourceManager.ReadAsBytesAsync(Resources.Models.ReceiptModel).Result;
             using PGNetPredictor predictor = new PGNetPredictor(modelBytes);
 
             // Act
@@ -79,16 +83,12 @@ namespace ReceiptScannerTests
         [TestMethod]
         public async Task ProcessImageAsync_WithTestReceipt_ValidatesBoundingBoxes()
         {
-            // Arrange
-            ResourceHelper resourceHelper = ResourceHelper.Instance;
-            TestResourceHelper testResourceHelper = TestResourceHelper.Instance;
-
             // Load the test receipt image
-            byte[] imageBytes = testResourceHelper.ReadAsBytesAsync(TestResource.TestFiles.TestReceipt01).Result;
+            byte[] imageBytes = _resourceManager.ReadAsBytesAsync(TestResources.TestFiles.TestReceipt01).Result;
             using MemoryStream imageStream = new MemoryStream(imageBytes);
 
             // Load the model
-            byte[] modelBytes = resourceHelper.ReadAsBytesAsync(Resources.Models.ReceiptModel).Result;
+            byte[] modelBytes = _resourceManager.ReadAsBytesAsync(Resources.Models.ReceiptModel).Result;
             using PGNetPredictor predictor = new PGNetPredictor(modelBytes);
 
             // Act
