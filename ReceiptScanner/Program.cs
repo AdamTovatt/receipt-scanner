@@ -1,6 +1,7 @@
 using ReceiptScanner.Services;
 using EasyReasy;
 using EasyReasy.ByteShelfProvider;
+using EasyReasy.EnvironmentVariables;
 
 namespace ReceiptScanner
 {
@@ -9,6 +10,9 @@ namespace ReceiptScanner
         public static void Main(string[] args)
         {
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+            // Validate environment variables
+            EnvironmentVariable.ValidateVariableNamesIn(typeof(EnvironmentVariables));
 
             // Add services to the container
             builder.Services.AddControllers();
@@ -27,15 +31,12 @@ namespace ReceiptScanner
 
             // Break out the creation of the PredefinedResourceProvider for models
             PredefinedResourceProvider modelsProvider = ByteShelfResourceProvider.Create(
-                typeof(Resources.Models),
-                "https://your-byteshelf-url", // TODO: Replace with real config
-                "your-api-key"                // TODO: Replace with real config
-            );
+                resourceCollectionType: typeof(Resources.Models),
+                baseUrl: EnvironmentVariable.GetStringValue(EnvironmentVariables.ByteShelfUrl),
+                apiKey: EnvironmentVariable.GetStringValue(EnvironmentVariables.ByteShelfApiKey));
 
             // Register ResourceManager as a singleton with predefined providers
-            builder.Services.AddSingleton(_ => ResourceManager.CreateInstance(
-                modelsProvider
-            ));
+            builder.Services.AddSingleton(_ => ResourceManager.CreateInstance(modelsProvider));
 
             // Register our services
             builder.Services.AddSingleton<IModelService, ModelService>();
