@@ -32,6 +32,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EasyReasy.ByteShelfProvider\EasyReasy.ByteShelfProvider.csproj" />
+    <ProjectReference Include="..\EasyReasy.EnvironmentVariable\EasyReasy.EnvironmentVariables.csproj" />
     <ProjectReference Include="..\EasyReasy\EasyReasy.csproj" />
   </ItemGroup>
 
