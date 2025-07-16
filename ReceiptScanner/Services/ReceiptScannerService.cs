@@ -1,16 +1,19 @@
 using ReceiptScanner.Models;
 using Microsoft.ML.OnnxRuntime;
+using EasyReasy;
 
 namespace ReceiptScanner.Services
 {
     public class ReceiptScannerService : IReceiptScannerService
     {
         private readonly IModelService _modelService;
+        private readonly ResourceManager _resourceManager;
         private PGNetPredictor? _predictor;
 
-        public ReceiptScannerService(IModelService modelService)
+        public ReceiptScannerService(IModelService modelService, ResourceManager resourceManager)
         {
             _modelService = modelService;
+            _resourceManager = resourceManager;
         }
 
         public async Task<ReceiptData> ScanReceiptAsync(IFormFile imageFile)
@@ -36,7 +39,7 @@ namespace ReceiptScanner.Services
                 {
                     InferenceSession model = await _modelService.GetModelAsync();
                     byte[] modelBytes = await _modelService.GetModelBytesAsync();
-                    _predictor = new PGNetPredictor(modelBytes);
+                    _predictor = new PGNetPredictor(modelBytes, _resourceManager);
                 }
 
                 // Process the image with OCR

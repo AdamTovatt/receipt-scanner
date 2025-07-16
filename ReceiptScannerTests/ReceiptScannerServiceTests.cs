@@ -14,19 +14,18 @@ namespace ReceiptScannerTests
         private static ResourceManager _resourceManager = null!;
 
         [ClassInitialize]
-        public static void BeforeAll()
+        public static void BeforeAll(TestContext testContext)
         {
             _resourceManager = ResourceManager.CreateInstance();
         }
 
         [TestMethod]
-        public void InspectOnnxModel_PrintModelInfo()
+        public async Task InspectOnnxModel_PrintModelInfo()
         {
-
             try
             {
                 // Load model bytes
-                byte[] modelBytes = _resourceManager.ReadAsBytesAsync(Resources.Models.ReceiptModel).Result;
+                byte[] modelBytes = await _resourceManager.ReadAsBytesAsync(Resources.Models.ReceiptModel);
                 Console.WriteLine($"Model size: {modelBytes.Length / (1024 * 1024):F2} MB");
 
                 // Create inference session to inspect model
@@ -133,7 +132,7 @@ namespace ReceiptScannerTests
         {
             // Arrange
             Mock<IModelService> modelServiceMock = new Mock<IModelService>();
-            ReceiptScannerService service = new ReceiptScannerService(modelServiceMock.Object);
+            ReceiptScannerService service = new ReceiptScannerService(modelServiceMock.Object, _resourceManager);
 
             // Act
             ReceiptData result = await service.ScanReceiptAsync(null!);
@@ -148,7 +147,7 @@ namespace ReceiptScannerTests
         {
             // Arrange
             Mock<IModelService> modelServiceMock = new Mock<IModelService>();
-            ReceiptScannerService service = new ReceiptScannerService(modelServiceMock.Object);
+            ReceiptScannerService service = new ReceiptScannerService(modelServiceMock.Object, _resourceManager);
             Mock<IFormFile> fileMock = new Mock<IFormFile>();
             fileMock.Setup(f => f.Length).Returns(0);
 
@@ -165,7 +164,7 @@ namespace ReceiptScannerTests
         {
             // Arrange
             Mock<IModelService> modelServiceMock = new Mock<IModelService>();
-            ReceiptScannerService service = new ReceiptScannerService(modelServiceMock.Object);
+            ReceiptScannerService service = new ReceiptScannerService(modelServiceMock.Object, _resourceManager);
             Mock<IFormFile> fileMock = new Mock<IFormFile>();
             fileMock.Setup(f => f.Length).Returns(100);
             fileMock.Setup(f => f.FileName).Returns("test.txt");

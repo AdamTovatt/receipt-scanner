@@ -1,6 +1,7 @@
 using ReceiptScanner.Models;
 using ReceiptScanner.Services;
 using Microsoft.AspNetCore.Mvc;
+using EasyReasy;
 
 namespace ReceiptScanner.Controllers
 {
@@ -9,18 +10,20 @@ namespace ReceiptScanner.Controllers
     public class ReceiptController : ControllerBase
     {
         private readonly IReceiptScannerService _receiptService;
+        private readonly ResourceManager _resourceManager;
 
-        public ReceiptController(IReceiptScannerService receiptService)
+        public ReceiptController(IReceiptScannerService receiptService, ResourceManager resourceManager)
         {
             _receiptService = receiptService;
+            _resourceManager = resourceManager;
         }
 
         [HttpGet]
-        public IActionResult GetFrontend()
+        public async Task<IActionResult> GetFrontend()
         {
             try
             {
-                string htmlContent = ResourceManager.GetInstance().ReadAsStringAsync(Resources.Frontend.ReceiptScannerFrontend).Result;
+                string htmlContent = await _resourceManager.ReadAsStringAsync(Resources.Frontend.ReceiptScannerFrontend);
                 
                 // Get the external URL from forwarded headers, but hardcode https
                 string scheme = "https"; // Hardcoded to fix mixed content

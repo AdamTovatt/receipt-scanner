@@ -4,6 +4,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using ReceiptScanner.Models;
+using EasyReasy;
 
 namespace ReceiptScanner.Services
 {
@@ -14,6 +15,7 @@ namespace ReceiptScanner.Services
         private readonly PGNetPostProcessor _postProcessor;
         private Image<Rgb24>? _originalImage;
         private bool _disposed = false;
+        private readonly ResourceManager _resourceManager;
 
         // Constants from Python code
         private const int MaxSideLen = 768;
@@ -21,16 +23,17 @@ namespace ReceiptScanner.Services
         private static readonly float[] Mean = { 0.485f, 0.456f, 0.406f };
         private static readonly float[] Std = { 0.229f, 0.224f, 0.225f };
 
-        public PGNetPredictor(byte[] modelBytes)
+        public PGNetPredictor(byte[] modelBytes, ResourceManager resourceManager)
         {
             _session = new InferenceSession(modelBytes);
+            _resourceManager = resourceManager;
             _characterDict = LoadCharacterDict();
             _postProcessor = new PGNetPostProcessor(_characterDict, ScoreThreshold, "totaltext");
         }
 
         private List<string> LoadCharacterDict()
         {
-            string dictContent = ResourceManager.GetInstance().ReadAsStringAsync(Resources.Dictionaries.IC15Dict).Result;
+            string dictContent = _resourceManager.ReadAsStringAsync(Resources.Dictionaries.IC15Dict).Result;
             return dictContent.Split('\n', StringSplitOptions.RemoveEmptyEntries).ToList();
         }
 

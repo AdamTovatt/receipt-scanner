@@ -11,7 +11,7 @@ namespace ReceiptScannerTests
         private static ResourceManager _resourceManager = null!;
 
         [ClassInitialize]
-        public static void BeforeAll()
+        public static void BeforeAll(TestContext testContext)
         {
             _resourceManager = ResourceManager.CreateInstance();
         }
@@ -25,7 +25,7 @@ namespace ReceiptScannerTests
 
             // Load the model
             byte[] modelBytes = _resourceManager.ReadAsBytesAsync(Resources.Models.ReceiptModel).Result;
-            using PGNetPredictor predictor = new PGNetPredictor(modelBytes);
+            using PGNetPredictor predictor = new PGNetPredictor(modelBytes, _resourceManager);
 
             // Act
             ReceiptData result = await predictor.ProcessImageAsync(imageStream);
@@ -89,7 +89,7 @@ namespace ReceiptScannerTests
 
             // Load the model
             byte[] modelBytes = _resourceManager.ReadAsBytesAsync(Resources.Models.ReceiptModel).Result;
-            using PGNetPredictor predictor = new PGNetPredictor(modelBytes);
+            using PGNetPredictor predictor = new PGNetPredictor(modelBytes, _resourceManager);
 
             // Act
             ReceiptData result = await predictor.ProcessImageAsync(imageStream);

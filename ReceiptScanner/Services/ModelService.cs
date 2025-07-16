@@ -1,4 +1,5 @@
 using Microsoft.ML.OnnxRuntime;
+using EasyReasy;
 
 namespace ReceiptScanner.Services
 {
@@ -7,6 +8,12 @@ namespace ReceiptScanner.Services
         private InferenceSession? _model;
         private byte[]? _modelBytes;
         private readonly SemaphoreSlim _lockObject = new SemaphoreSlim(1, 1);
+        private readonly ResourceManager _resourceManager;
+
+        public ModelService(ResourceManager resourceManager)
+        {
+            _resourceManager = resourceManager;
+        }
 
         public bool IsModelLoaded => _model != null;
 
@@ -26,7 +33,7 @@ namespace ReceiptScanner.Services
                     return _model;
                 }
 
-                byte[] modelBytes = await ResourceManager.GetInstance().ReadAsBytesAsync(Resources.Models.ReceiptModel);
+                byte[] modelBytes = await _resourceManager.ReadAsBytesAsync(Resources.Models.ReceiptModel);
                 _modelBytes = modelBytes;
                 _model = new InferenceSession(modelBytes);
                 return _model;
