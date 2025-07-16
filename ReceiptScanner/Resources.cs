@@ -1,4 +1,5 @@
 using EasyReasy;
+using EasyReasy.ByteShelfProvider;
 
 namespace ReceiptScanner
 {
@@ -10,7 +11,7 @@ namespace ReceiptScanner
         /// <summary>
         /// Machine learning models used by the receipt scanner.
         /// </summary>
-        [ResourceCollection(typeof(EmbeddedResourceProvider))]
+        [ResourceCollection(typeof(ByteShelfResourceProvider))]
         public static class Models
         {
             /// <summary>

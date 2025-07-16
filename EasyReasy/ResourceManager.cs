@@ -3,9 +3,6 @@ using System.Text;
 
 namespace EasyReasy
 {
-    /// <summary>
-    /// Manages resource collections and their associated providers.
-    /// </summary>
     public class ResourceManager
     {
         private readonly Dictionary<Type, IResourceProvider> providers = new Dictionary<Type, IResourceProvider>();
@@ -17,13 +14,38 @@ namespace EasyReasy
         /// </summary>
         /// <param name="assembly">The assembly to discover resource collections from. If null, uses the executing assembly.</param>
         /// <returns>A new <see cref="ResourceManager"/> instance.</returns>
-        public static ResourceManager CreateInstance(Assembly? assembly = null)
+        public static ResourceManager CreateInstance(
+            Assembly? assembly = null,
+            params PredefinedResourceProvider[] predefinedProviders
+        )
         {
             assembly ??= Assembly.GetExecutingAssembly();
             ResourceManager instance = new ResourceManager(assembly);
+
+            // Register predefined providers before discovery
+            if (predefinedProviders != null)
+            {
+                foreach (PredefinedResourceProvider predefined in predefinedProviders)
+                {
+                    instance.RegisterProvider(predefined.ResourceCollectionType, predefined.Provider);
+                }
+            }
+
             instance.DiscoverResourceCollections();
             instance.VerifyResourceMappings();
             return instance;
+        }
+
+        /// <summary>
+        /// Creates a new instance of <see cref="ResourceManager"/> for the specified assembly.
+        /// </summary>
+        /// <param name="predefinedProviders">The predefined resource providers to register.</param>
+        /// <returns>A new <see cref="ResourceManager"/> instance.</returns>
+        public static ResourceManager CreateInstance(
+            params PredefinedResourceProvider[] predefinedProviders
+        )
+        {
+            return CreateInstance(null, predefinedProviders);
         }
 
         /// <summary>
@@ -43,6 +65,16 @@ namespace EasyReasy
         public void RegisterProvider<T>(IResourceProvider provider) where T : class
         {
             providers[typeof(T)] = provider;
+        }
+
+        /// <summary>
+        /// Registers a provider for a specific resource collection type.
+        /// </summary>
+        /// <param name="collectionType">The resource collection type.</param>
+        /// <param name="provider">The provider to register.</param>
+        public void RegisterProvider(Type collectionType, IResourceProvider provider)
+        {
+            providers[collectionType] = provider;
         }
 
         /// <summary>
