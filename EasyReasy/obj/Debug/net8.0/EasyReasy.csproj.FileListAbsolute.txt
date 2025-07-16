@@ -1,5 +1,0 @@
-C:\Users\Adam\code\receipt-scanner\EasyReasy\obj\Debug\net8.0\EasyReasy.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\Adam\code\receipt-scanner\EasyReasy\obj\Debug\net8.0\EasyReasy.AssemblyInfoInputs.cache
-C:\Users\Adam\code\receipt-scanner\EasyReasy\obj\Debug\net8.0\EasyReasy.AssemblyInfo.cs
-C:\Users\Adam\code\receipt-scanner\EasyReasy\obj\Debug\net8.0\EasyReasy.csproj.CoreCompileInputs.cache
-C:\Users\Adam\code\receipt-scanner\EasyReasy\obj\Debug\net8.0\EasyReasy.sourcelink.json
