@@ -4,22 +4,29 @@ using ReceiptScanner.Models;
 using ReceiptScanner.Services;
 using Microsoft.ML.OnnxRuntime;
 using ReceiptScanner;
+using EasyReasy;
 
 namespace ReceiptScannerTests
 {
     [TestClass]
     public class ReceiptScannerServiceTests
     {
+        private static ResourceManager _resourceManager = null!;
+
+        [ClassInitialize]
+        public static void BeforeAll()
+        {
+            _resourceManager = ResourceManager.CreateInstance();
+        }
+
         [TestMethod]
         public void InspectOnnxModel_PrintModelInfo()
         {
-            // Arrange
-            ResourceManager resourceManager = ResourceManager.Instance;
 
             try
             {
                 // Load model bytes
-                byte[] modelBytes = resourceManager.ReadAsBytesAsync(Resources.Models.ReceiptModel).Result;
+                byte[] modelBytes = _resourceManager.ReadAsBytesAsync(Resources.Models.ReceiptModel).Result;
                 Console.WriteLine($"Model size: {modelBytes.Length / (1024 * 1024):F2} MB");
 
                 // Create inference session to inspect model
@@ -171,4 +178,4 @@ namespace ReceiptScannerTests
             Assert.IsFalse(string.IsNullOrEmpty(result.Error));
         }
     }
-} 
+}

@@ -6,7 +6,7 @@ namespace EasyReasy.EnvironmentVariables
     /// <summary>
     /// Helper class for environment variable validation and retrieval.
     /// </summary>
-    public static class EnvironmentVariable
+    public static class EnvironmentVariables
     {
         /// <summary>
         /// Gets an environment variable value with validation.
@@ -15,7 +15,7 @@ namespace EasyReasy.EnvironmentVariables
         /// <param name="minLength">The minimum length requirement for the value.</param>
         /// <returns>The environment variable value.</returns>
         /// <exception cref="InvalidOperationException">Thrown when the environment variable is missing or doesn't meet minimum length requirements.</exception>
-        public static string GetStringValue(string variableName, int minLength = 0)
+        public static string GetVariable(string variableName, int minLength = 0)
         {
             string? value = Environment.GetEnvironmentVariable(variableName);
 
@@ -30,6 +30,60 @@ namespace EasyReasy.EnvironmentVariables
             }
 
             return value;
+        }
+
+        /// <summary>
+        /// Loads environment variables from a file and sets them using Environment.SetEnvironmentVariable.
+        /// The file should be in the format:
+        /// VARIABLE_NAME1=value1
+        /// VARIABLE_NAME2=value2
+        /// Lines starting with # or // are treated as comments and skipped.
+        /// </summary>
+        /// <param name="filePath">The path to the file containing environment variables.</param>
+        /// <exception cref="FileNotFoundException">Thrown when the specified file does not exist.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when the file format is invalid.</exception>
+        public static void LoadFromFile(string filePath)
+        {
+            if (!File.Exists(filePath))
+            {
+                throw new FileNotFoundException($"Environment variables file not found: {filePath}");
+            }
+
+            string[] lines = File.ReadAllLines(filePath);
+            int lineNumber = 0;
+
+            foreach (string line in lines)
+            {
+                lineNumber++;
+                string trimmedLine = line.Trim();
+
+                // Skip empty lines and comments
+                if (string.IsNullOrWhiteSpace(trimmedLine) ||
+                    trimmedLine.StartsWith("#") ||
+                    trimmedLine.StartsWith("//"))
+                {
+                    continue;
+                }
+
+                // Parse the line for VARIABLE_NAME=value format
+                int equalsIndex = trimmedLine.IndexOf('=');
+                if (equalsIndex == -1)
+                {
+                    throw new InvalidOperationException($"Invalid format at line {lineNumber}: '{line}'. Expected format: VARIABLE_NAME=value");
+                }
+
+                string variableName = trimmedLine.Substring(0, equalsIndex).Trim();
+                string value = trimmedLine.Substring(equalsIndex + 1).Trim();
+
+                // Validate variable name is not empty
+                if (string.IsNullOrWhiteSpace(variableName))
+                {
+                    throw new InvalidOperationException($"Invalid variable name at line {lineNumber}: '{line}'. Variable name cannot be empty.");
+                }
+
+                // Set the environment variable
+                Environment.SetEnvironmentVariable(variableName, value);
+            }
         }
 
         /// <summary>
@@ -64,7 +118,7 @@ namespace EasyReasy.EnvironmentVariables
                             try
                             {
                                 // Try to get the environment variable
-                                string value = GetStringValue(fieldValue, attribute.MinLength);
+                                string value = GetVariable(fieldValue, attribute.MinLength);
 
                                 // If we get here, the variable exists and meets minimum length
                             }

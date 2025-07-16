@@ -3,7 +3,7 @@
 namespace ReceiptScanner
 {
     [EnvironmentVariableNameContainer]
-    public static class EnvironmentVariables
+    public static class EnvironmentVariable
     {
         [EnvironmentVariableName(minLength: 10)]
         public static readonly string ByteShelfUrl = "BYTE_SHELF_URL";

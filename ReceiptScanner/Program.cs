@@ -12,7 +12,7 @@ namespace ReceiptScanner
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
             // Validate environment variables
-            EnvironmentVariable.ValidateVariableNamesIn(typeof(EnvironmentVariables));
+            EnvironmentVariables.ValidateVariableNamesIn(typeof(EnvironmentVariable));
 
             // Add services to the container
             builder.Services.AddControllers();
@@ -32,8 +32,8 @@ namespace ReceiptScanner
             // Break out the creation of the PredefinedResourceProvider for models
             PredefinedResourceProvider modelsProvider = ByteShelfResourceProvider.Create(
                 resourceCollectionType: typeof(Resources.Models),
-                baseUrl: EnvironmentVariable.GetStringValue(EnvironmentVariables.ByteShelfUrl),
-                apiKey: EnvironmentVariable.GetStringValue(EnvironmentVariables.ByteShelfApiKey));
+                baseUrl: EnvironmentVariables.GetVariable(EnvironmentVariable.ByteShelfUrl),
+                apiKey: EnvironmentVariables.GetVariable(EnvironmentVariable.ByteShelfApiKey));
 
             // Register ResourceManager as a singleton with predefined providers
             builder.Services.AddSingleton(_ => ResourceManager.CreateInstance(modelsProvider));
