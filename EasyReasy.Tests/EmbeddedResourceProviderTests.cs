@@ -91,7 +91,7 @@ namespace EasyReasy.Tests
             Resource testResource = new Resource("TestResources/test.txt");
 
             // Act
-            byte[] result = await provider.ReadAsBytesAsync(testResource);
+            byte[] result = await ((IResourceProvider)provider).ReadAsBytesAsync(testResource);
 
             // Assert
             Assert.IsNotNull(result);
@@ -106,7 +106,7 @@ namespace EasyReasy.Tests
             Resource testResource = new Resource("TestResources/test.txt");
 
             // Act
-            string result = await provider.ReadAsStringAsync(testResource);
+            string result = await ((IResourceProvider)provider).ReadAsStringAsync(testResource);
 
             // Assert
             Assert.IsNotNull(result);
@@ -123,7 +123,7 @@ namespace EasyReasy.Tests
 
             // Act & Assert
             await Assert.ThrowsExceptionAsync<FileNotFoundException>(() => 
-                provider.ReadAsStringAsync(testResource));
+                ((IResourceProvider)provider).ReadAsStringAsync(testResource));
         }
 
         [TestMethod]
@@ -135,7 +135,7 @@ namespace EasyReasy.Tests
 
             // Act & Assert
             await Assert.ThrowsExceptionAsync<FileNotFoundException>(() => 
-                provider.ReadAsBytesAsync(testResource));
+                ((IResourceProvider)provider).ReadAsBytesAsync(testResource));
         }
 
         [TestMethod]
@@ -176,7 +176,7 @@ namespace EasyReasy.Tests
             Resource testResource = new Resource("TestResources/test.json");
 
             // Act
-            string result = await provider.ReadAsStringAsync(testResource);
+            string result = await ((IResourceProvider)provider).ReadAsStringAsync(testResource);
 
             // Assert
             Assert.IsNotNull(result);
@@ -193,7 +193,7 @@ namespace EasyReasy.Tests
             Resource testResource = new Resource("TestResources/test.bin");
 
             // Act
-            byte[] result = await provider.ReadAsBytesAsync(testResource);
+            byte[] result = await ((IResourceProvider)provider).ReadAsBytesAsync(testResource);
 
             // Assert
             Assert.IsNotNull(result);

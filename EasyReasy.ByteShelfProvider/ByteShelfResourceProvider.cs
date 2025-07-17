@@ -1,17 +1,18 @@
 using System.Text;
 using ByteShelfClient;
 using ByteShelfCommon;
-using EasyReasy;
 
 namespace EasyReasy.ByteShelfProvider
 {
     /// <summary>
     /// Provides access to resources via ByteShelf, mapping Resource.Path directories to subtenant hierarchy.
+    /// Supports optional local caching of downloaded resources.
     /// </summary>
     public class ByteShelfResourceProvider : IResourceProvider
     {
         private readonly IShelfFileProvider shelfProvider;
         private readonly string? rootSubTenantId;
+        private readonly IResourceCache? cache;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ByteShelfResourceProvider"/> class.
@@ -19,18 +20,37 @@ namespace EasyReasy.ByteShelfProvider
         /// <param name="baseUrl">The ByteShelf API base URL.</param>
         /// <param name="apiKey">The API key for ByteShelf.</param>
         /// <param name="rootSubTenantId">Optional root subtenant ID to start from.</param>
+        /// <param name="cache">Optional cache implementation for downloaded resources.</param>
         public ByteShelfResourceProvider(
             string baseUrl,
             string apiKey,
-            string? rootSubTenantId = null)
+            string? rootSubTenantId = null,
+            IResourceCache? cache = null)
         {
             HttpClient httpClient = HttpShelfFileProvider.CreateHttpClient(baseUrl);
             shelfProvider = new HttpShelfFileProvider(httpClient, apiKey);
             this.rootSubTenantId = rootSubTenantId;
+            this.cache = cache;
         }
 
         public async Task<bool> ResourceExistsAsync(Resource resource)
         {
+            // First check if it exists in cache
+            if (cache != null)
+            {
+                if (await cache.ExistsAsync(resource.Path))
+                {
+                    // Check if we need to invalidate the cache
+                    if (await ShouldInvalidateCacheAsync(resource))
+                    {
+                        // Cache is stale, but the file still exists in ByteShelf
+                        return true;
+                    }
+                    return true;
+                }
+            }
+
+            // Check if it exists in ByteShelf
             (string? subTenantId, string fileName) = await ResolveSubTenantAndFileName(resource.Path);
 
             IEnumerable<ShelfFileMetadata> files = subTenantId == null
@@ -43,6 +63,21 @@ namespace EasyReasy.ByteShelfProvider
 
         public async Task<Stream> GetResourceStreamAsync(Resource resource)
         {
+            // First check if it exists in cache and is not stale
+            if (cache != null)
+            {
+                if (await cache.ExistsAsync(resource.Path))
+                {
+                    // Check if we need to invalidate the cache
+                    if (!await ShouldInvalidateCacheAsync(resource))
+                    {
+                        return await cache.GetStreamAsync(resource.Path);
+                    }
+                    // Cache is stale, will download fresh copy below
+                }
+            }
+
+            // Download from ByteShelf and cache if cache is provided
             (string? subTenantId, string fileName) = await ResolveSubTenantAndFileName(resource.Path);
 
             // Find file by display name (OriginalFilename)
@@ -59,30 +94,17 @@ namespace EasyReasy.ByteShelfProvider
                 ? await shelfProvider.ReadFileAsync(file.Id)
                 : await shelfProvider.ReadFileForTenantAsync(subTenantId, file.Id);
 
-            return shelfFile.GetContentStream();
-        }
+            Stream contentStream = shelfFile.GetContentStream();
 
-        public async Task<byte[]> ReadAsBytesAsync(Resource resource)
-        {
-            using (Stream stream = await GetResourceStreamAsync(resource))
+            // Cache the file if cache is provided
+            if (cache != null)
             {
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    await stream.CopyToAsync(ms);
-                    return ms.ToArray();
-                }
+                await cache.StoreAsync(resource.Path, contentStream);
+                // Reset stream position for reading
+                contentStream.Position = 0;
             }
-        }
 
-        public async Task<string> ReadAsStringAsync(Resource resource)
-        {
-            using (Stream stream = await GetResourceStreamAsync(resource))
-            {
-                using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
-                {
-                    return await reader.ReadToEndAsync();
-                }
-            }
+            return contentStream;
         }
 
         /// <summary>
@@ -129,17 +151,64 @@ namespace EasyReasy.ByteShelfProvider
         }
 
         /// <summary>
+        /// Determines if the cached version should be invalidated based on file timestamps.
+        /// </summary>
+        /// <param name="resource">The resource to check.</param>
+        /// <returns>True if the cache should be invalidated; otherwise, false.</returns>
+        private async Task<bool> ShouldInvalidateCacheAsync(Resource resource)
+        {
+            if (cache == null)
+                return false;
+
+            // Get cached file creation time
+            DateTimeOffset? cachedTime = await cache.GetCreationTimeAsync(resource.Path);
+            if (cachedTime == null)
+                return false;
+
+            try
+            {
+                // Get ByteShelf file metadata
+                (string? subTenantId, string fileName) = await ResolveSubTenantAndFileName(resource.Path);
+
+                IEnumerable<ShelfFileMetadata> files = subTenantId == null
+                    ? await shelfProvider.GetFilesAsync()
+                    : await shelfProvider.GetFilesForTenantAsync(subTenantId);
+
+                ShelfFileMetadata? file = files.FirstOrDefault(f => string.Equals(f.OriginalFilename, fileName, StringComparison.OrdinalIgnoreCase));
+
+                if (file == null)
+                    return false;
+
+                // Compare timestamps - if ByteShelf file is newer, invalidate cache
+                return file.CreatedAt > cachedTime.Value;
+            }
+            catch
+            {
+                // If we can't determine the timestamp, assume cache is valid
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Creates a PredefinedResourceProvider for the given resource collection type using ByteShelfResourceProvider.
         /// </summary>
         /// <param name="resourceCollectionType">The resource collection type.</param>
         /// <param name="baseUrl">The ByteShelf API base URL.</param>
         /// <param name="apiKey">The API key for ByteShelf.</param>
+        /// <param name="rootSubTenantId">Optional root subtenant ID to start from.</param>
+        /// <param name="cache">Optional cache implementation for downloaded resources.</param>
         /// <returns>A PredefinedResourceProvider for the specified resource collection type.</returns>
-        public static PredefinedResourceProvider Create(Type resourceCollectionType, string baseUrl, string apiKey)
+        public static PredefinedResourceProvider Create(Type resourceCollectionType, string baseUrl, string apiKey, string? rootSubTenantId = null, IResourceCache? cache = null)
         {
+            ArgumentException.ThrowIfNullOrEmpty(baseUrl);
+            ArgumentException.ThrowIfNullOrWhiteSpace(baseUrl);
+            ArgumentException.ThrowIfNullOrWhiteSpace(apiKey);
+
+            ArgumentNullException.ThrowIfNull(resourceCollectionType);
+
             return new PredefinedResourceProvider(
                 resourceCollectionType,
-                new ByteShelfResourceProvider(baseUrl, apiKey)
+                new ByteShelfResourceProvider(baseUrl, apiKey, rootSubTenantId, cache)
             );
         }
     }

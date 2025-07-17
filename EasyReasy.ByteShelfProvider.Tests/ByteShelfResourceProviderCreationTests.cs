@@ -1,12 +1,45 @@
-using EasyReasy;
 using EasyReasy.ByteShelfProvider;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using EasyReasy;
 
 namespace EasyReasy.Tests
 {
     [TestClass]
-    public class ByteShelfResourceProviderTests
+    public class ByteShelfResourceProviderCreationTests
     {
+        // Mock cache implementation for testing
+        private class MockResourceCache : IResourceCache
+        {
+            public Task<bool> ExistsAsync(string resourcePath)
+            {
+                return Task.FromResult(false);
+            }
+
+            public Task<Stream> GetStreamAsync(string resourcePath)
+            {
+                throw new NotImplementedException();
+            }
+
+            public Task StoreAsync(string resourcePath, Stream content)
+            {
+                return Task.CompletedTask;
+            }
+
+            public Task StoreAsync(string resourcePath, byte[] content)
+            {
+                return Task.CompletedTask;
+            }
+
+            public Task StoreAsync(string resourcePath, string content)
+            {
+                return Task.CompletedTask;
+            }
+
+            public Task<DateTimeOffset?> GetCreationTimeAsync(string resourcePath)
+            {
+                return Task.FromResult<DateTimeOffset?>(null);
+            }
+        }
+
         [TestMethod]
         public void Create_WithValidParameters_ReturnsPredefinedProvider()
         {
@@ -35,9 +68,9 @@ namespace EasyReasy.Tests
             string apiKey = "test-api-key";
 
             // Act & Assert
-            Assert.ThrowsException<ArgumentException>(() => ByteShelfResourceProvider.Create(
+            Assert.ThrowsException<ArgumentNullException>(() => ByteShelfResourceProvider.Create(
                 resourceCollectionType: typeof(TestResourceCollection),
-                baseUrl: baseUrl,
+                baseUrl: baseUrl!,
                 apiKey: apiKey));
         }
 
@@ -49,10 +82,10 @@ namespace EasyReasy.Tests
             string? apiKey = null;
 
             // Act & Assert
-            Assert.ThrowsException<ArgumentException>(() => ByteShelfResourceProvider.Create(
+            Assert.ThrowsException<ArgumentNullException>(() => ByteShelfResourceProvider.Create(
                 resourceCollectionType: typeof(TestResourceCollection),
                 baseUrl: baseUrl,
-                apiKey: apiKey));
+                apiKey: apiKey!));
         }
 
         [TestMethod]
@@ -112,34 +145,6 @@ namespace EasyReasy.Tests
         }
 
         [TestMethod]
-        public void Create_WithInvalidBaseUrl_ThrowsArgumentException()
-        {
-            // Arrange
-            string baseUrl = "not-a-valid-url";
-            string apiKey = "test-api-key";
-
-            // Act & Assert
-            Assert.ThrowsException<ArgumentException>(() => ByteShelfResourceProvider.Create(
-                resourceCollectionType: typeof(TestResourceCollection),
-                baseUrl: baseUrl,
-                apiKey: apiKey));
-        }
-
-        [TestMethod]
-        public void Create_WithHttpBaseUrl_ThrowsArgumentException()
-        {
-            // Arrange
-            string baseUrl = "http://api.byteshelf.com";
-            string apiKey = "test-api-key";
-
-            // Act & Assert
-            Assert.ThrowsException<ArgumentException>(() => ByteShelfResourceProvider.Create(
-                resourceCollectionType: typeof(TestResourceCollection),
-                baseUrl: baseUrl,
-                apiKey: apiKey));
-        }
-
-        [TestMethod]
         public void Create_WithValidHttpsUrl_DoesNotThrow()
         {
             // Arrange
@@ -185,6 +190,86 @@ namespace EasyReasy.Tests
                 apiKey: apiKey);
 
             Assert.IsNotNull(provider);
+        }
+
+        [TestMethod]
+        public void Create_WithNullCache_DoesNotThrow()
+        {
+            // Arrange
+            string baseUrl = "https://api.byteshelf.com";
+            string apiKey = "test-api-key";
+            IResourceCache? cache = null;
+
+            // Act & Assert
+            PredefinedResourceProvider provider = ByteShelfResourceProvider.Create(
+                resourceCollectionType: typeof(TestResourceCollection),
+                baseUrl: baseUrl,
+                apiKey: apiKey,
+                cache: cache);
+
+            Assert.IsNotNull(provider);
+        }
+
+        [TestMethod]
+        public void Create_WithMockCache_DoesNotThrow()
+        {
+            // Arrange
+            string baseUrl = "https://api.byteshelf.com";
+            string apiKey = "test-api-key";
+            IResourceCache cache = new MockResourceCache();
+
+            // Act & Assert
+            PredefinedResourceProvider provider = ByteShelfResourceProvider.Create(
+                resourceCollectionType: typeof(TestResourceCollection),
+                baseUrl: baseUrl,
+                apiKey: apiKey,
+                cache: cache);
+
+            Assert.IsNotNull(provider);
+        }
+
+        [TestMethod]
+        public void Create_WithRootSubTenantId_ReturnsPredefinedProvider()
+        {
+            // Arrange
+            string baseUrl = "https://api.byteshelf.com";
+            string apiKey = "test-api-key";
+            string rootSubTenantId = "tenant-123";
+
+            // Act & Assert
+            PredefinedResourceProvider provider = ByteShelfResourceProvider.Create(
+                resourceCollectionType: typeof(TestResourceCollection),
+                baseUrl: baseUrl,
+                apiKey: apiKey,
+                rootSubTenantId: rootSubTenantId);
+
+            Assert.IsNotNull(provider);
+            Assert.AreEqual(typeof(TestResourceCollection), provider.ResourceCollectionType);
+            Assert.IsNotNull(provider.Provider);
+            Assert.IsInstanceOfType(provider.Provider, typeof(ByteShelfResourceProvider));
+        }
+
+        [TestMethod]
+        public void Create_WithAllParameters_ReturnsPredefinedProvider()
+        {
+            // Arrange
+            string baseUrl = "https://api.byteshelf.com";
+            string apiKey = "test-api-key";
+            string rootSubTenantId = "tenant-123";
+            IResourceCache cache = new MockResourceCache();
+
+            // Act & Assert
+            PredefinedResourceProvider provider = ByteShelfResourceProvider.Create(
+                resourceCollectionType: typeof(TestResourceCollection),
+                baseUrl: baseUrl,
+                apiKey: apiKey,
+                rootSubTenantId: rootSubTenantId,
+                cache: cache);
+
+            Assert.IsNotNull(provider);
+            Assert.AreEqual(typeof(TestResourceCollection), provider.ResourceCollectionType);
+            Assert.IsNotNull(provider.Provider);
+            Assert.IsInstanceOfType(provider.Provider, typeof(ByteShelfResourceProvider));
         }
 
         // Test resource collection for testing

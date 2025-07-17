@@ -49,39 +49,6 @@ namespace EasyReasy
             return fileInfo.CreateReadStream();
         }
 
-        /// <summary>
-        /// Reads the specified embedded resource as a byte array.
-        /// </summary>
-        /// <param name="resource">The resource to read.</param>
-        /// <returns>The resource content as a byte array.</returns>
-        public async Task<byte[]> ReadAsBytesAsync(Resource resource)
-        {
-            using (Stream resourceStream = await GetResourceStreamAsync(resource))
-            {
-                using (MemoryStream memoryStream = new MemoryStream())
-                {
-                    await resourceStream.CopyToAsync(memoryStream);
-                    return memoryStream.ToArray();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Reads the specified embedded resource as a string.
-        /// </summary>
-        /// <param name="resource">The resource to read.</param>
-        /// <returns>The resource content as a string.</returns>
-        public async Task<string> ReadAsStringAsync(Resource resource)
-        {
-            using (Stream resourceStream = await GetResourceStreamAsync(resource))
-            {
-                using (StreamReader reader = new StreamReader(resourceStream))
-                {
-                    return await reader.ReadToEndAsync();
-                }
-            }
-        }
-
         private IFileInfo GetFileInfo(Resource resource)
         {
             string path = resource.Path;

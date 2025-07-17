@@ -24,13 +24,32 @@ namespace EasyReasy
         /// </summary>
         /// <param name="resource">The resource to read.</param>
         /// <returns>The resource content as a byte array.</returns>
-        Task<byte[]> ReadAsBytesAsync(Resource resource);
+        async Task<byte[]> ReadAsBytesAsync(Resource resource)
+        {
+            using (Stream resourceStream = await GetResourceStreamAsync(resource))
+            {
+                using (MemoryStream memoryStream = new MemoryStream())
+                {
+                    await resourceStream.CopyToAsync(memoryStream);
+                    return memoryStream.ToArray();
+                }
+            }
+        }
 
         /// <summary>
         /// Reads the specified resource as a string.
         /// </summary>
         /// <param name="resource">The resource to read.</param>
         /// <returns>The resource content as a string.</returns>
-        Task<string> ReadAsStringAsync(Resource resource);
+        async Task<string> ReadAsStringAsync(Resource resource)
+        {
+            using (Stream resourceStream = await GetResourceStreamAsync(resource))
+            {
+                using (StreamReader reader = new StreamReader(resourceStream))
+                {
+                    return await reader.ReadToEndAsync();
+                }
+            }
+        }
     }
-} 
+}
