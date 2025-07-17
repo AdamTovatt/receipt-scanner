@@ -39,6 +39,11 @@ namespace EasyReasy
             return stream;
         }
 
+        /// <summary>
+        /// Gets the last write time of a cached resource.
+        /// </summary>
+        /// <param name="resourcePath">The path of the resource to check.</param>
+        /// <returns>The last write time of the cached resource, or null if the resource doesn't exist.</returns>
         public async Task<DateTimeOffset?> GetCreationTimeAsync(string resourcePath)
         {
             await Task.CompletedTask;
@@ -46,7 +51,7 @@ namespace EasyReasy
             if (!File.Exists(filePath))
                 return null;
 
-            return new DateTimeOffset(File.GetCreationTimeUtc(filePath), TimeSpan.Zero);
+            return new DateTimeOffset(File.GetLastWriteTimeUtc(filePath), TimeSpan.Zero);
         }
 
         public async Task StoreAsync(string resourcePath, Stream content)

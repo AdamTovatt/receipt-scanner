@@ -57,7 +57,7 @@ namespace EasyReasy.ByteShelfProvider
                 ? await shelfProvider.GetFilesAsync()
                 : await shelfProvider.GetFilesForTenantAsync(subTenantId);
 
-            // Find file by display name (OriginalFilename)
+            // Find file by display name (OriginalFilename) - take the newest if multiple exist
             return files.Any(f => string.Equals(f.OriginalFilename, fileName, StringComparison.OrdinalIgnoreCase));
         }
 
@@ -80,12 +80,15 @@ namespace EasyReasy.ByteShelfProvider
             // Download from ByteShelf and cache if cache is provided
             (string? subTenantId, string fileName) = await ResolveSubTenantAndFileName(resource.Path);
 
-            // Find file by display name (OriginalFilename)
+            // Find file by display name (OriginalFilename) - take the newest if multiple exist
             IEnumerable<ShelfFileMetadata> files = subTenantId == null
                 ? await shelfProvider.GetFilesAsync()
                 : await shelfProvider.GetFilesForTenantAsync(subTenantId);
 
-            ShelfFileMetadata? file = files.FirstOrDefault(f => string.Equals(f.OriginalFilename, fileName, StringComparison.OrdinalIgnoreCase));
+            ShelfFileMetadata? file = files
+                .Where(f => string.Equals(f.OriginalFilename, fileName, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(f => f.CreatedAt)
+                .FirstOrDefault();
 
             if (file == null)
                 throw new FileNotFoundException($"File '{resource.Path}' not found in ByteShelf.");
@@ -174,7 +177,10 @@ namespace EasyReasy.ByteShelfProvider
                     ? await shelfProvider.GetFilesAsync()
                     : await shelfProvider.GetFilesForTenantAsync(subTenantId);
 
-                ShelfFileMetadata? file = files.FirstOrDefault(f => string.Equals(f.OriginalFilename, fileName, StringComparison.OrdinalIgnoreCase));
+                ShelfFileMetadata? file = files
+                    .Where(f => string.Equals(f.OriginalFilename, fileName, StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(f => f.CreatedAt)
+                    .FirstOrDefault();
 
                 if (file == null)
                     return false;

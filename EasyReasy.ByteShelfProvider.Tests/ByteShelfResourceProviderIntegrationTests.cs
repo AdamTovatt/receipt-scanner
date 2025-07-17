@@ -33,7 +33,7 @@ namespace EasyReasy.ByteShelfProvider.Tests
             {
                 if (!cache.ContainsKey(resourcePath))
                     throw new FileNotFoundException($"Resource '{resourcePath}' not found in cache.");
-                
+
                 return Task.FromResult<Stream>(new MemoryStream(cache[resourcePath]));
             }
 
@@ -146,6 +146,20 @@ namespace EasyReasy.ByteShelfProvider.Tests
             foreach (string subTenantId in createdSubTenantIds.AsEnumerable().Reverse())
             {
                 try { await classShelfProvider.DeleteSubTenantAsync(subTenantId); } catch { }
+            }
+
+            Dictionary<string, TenantInfoResponse> subTenants = await classShelfProvider.GetSubTenantsAsync();
+
+            foreach (string subtenantId in subTenants.Keys)
+            {
+                await classShelfProvider.DeleteSubTenantAsync(subtenantId);
+            }
+
+            IEnumerable<ShelfFileMetadata> files = await classShelfProvider.GetFilesAsync();
+
+            foreach (ShelfFileMetadata file in files)
+            {
+                await classShelfProvider.DeleteFileAsync(file.Id);
             }
         }
 
@@ -260,33 +274,109 @@ namespace EasyReasy.ByteShelfProvider.Tests
         }
 
         [TestMethod]
-        public async Task GetResourceStreamAsync_WithCaching_ReturnsCachedFile()
+        public async Task GetResourceStreamAsync_UsesCache_WhenFileIsCached()
         {
             // Arrange
-            MockResourceCache cache = new MockResourceCache();
-            ByteShelfResourceProvider provider = new ByteShelfResourceProvider(BaseUrl, ApiKey, cache: cache);
+            string tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            FileSystemCache cache = new FileSystemCache(tempDir);
+            IResourceProvider provider = new ByteShelfResourceProvider(BaseUrl, ApiKey, cache: cache);
             Resource resource = new Resource("Sub1/file1.txt");
 
             // Act - First call should download and cache
-            string firstResult;
-            using (Stream stream = await provider.GetResourceStreamAsync(resource))
-            using (StreamReader reader = new StreamReader(stream))
-            {
-                firstResult = await reader.ReadToEndAsync();
-            }
+            string firstResult = await provider.ReadAsStringAsync(resource);
 
-            // Act - Second call should use cache
-            string secondResult;
-            using (Stream stream = await provider.GetResourceStreamAsync(resource))
-            using (StreamReader reader = new StreamReader(stream))
-            {
-                secondResult = await reader.ReadToEndAsync();
-            }
+            // Wait to ensure the cache's last write time is newer than the remote
+            await Task.Delay(1100);
+
+            // Modify the cached file directly
+            string cachedFilePath = Path.Combine(tempDir, "Sub1", "file1.txt");
+            Directory.CreateDirectory(Path.GetDirectoryName(cachedFilePath)!);
+            File.WriteAllText(cachedFilePath, "MODIFIED CACHE CONTENT");
+
+            // Act - Second call should use cache and return modified content
+            string secondResult = await provider.ReadAsStringAsync(resource);
 
             // Assert
             Assert.AreEqual("Sub1 file1 content", firstResult);
-            Assert.AreEqual("Sub1 file1 content", secondResult);
-            Assert.IsTrue(await cache.ExistsAsync("Sub1/file1.txt"));
+            Assert.AreEqual("MODIFIED CACHE CONTENT", secondResult);
+        }
+
+        [TestMethod]
+        public async Task GetResourceStreamAsync_InvalidatesCache_WhenRemoteFileIsNewer()
+        {
+            // Arrange
+            Assert.IsNotNull(classShelfProvider); // These are needed
+            Assert.IsNotNull(sub1Id);
+
+            string tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            FileSystemCache cache = new FileSystemCache(tempDir);
+            IResourceProvider provider = new ByteShelfResourceProvider(BaseUrl, ApiKey, cache: cache);
+
+            // Let's manually create a new resource for this test
+            const string fileName = "cacheInvalidationTest.txt";
+            const string sub1Name = "Sub1";
+            Resource resource = new Resource(Path.Combine(sub1Name, fileName));
+
+            using (MemoryStream memoryStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("Cache invalidation test file content")))
+            {
+                await classShelfProvider.WriteFileForTenantAsync(sub1Id, fileName, "text/plain", memoryStream);
+            }
+
+            // Act - First call should download and cache
+            string firstResult = await provider.ReadAsStringAsync(resource);
+            Assert.AreEqual("Cache invalidation test file content", firstResult);
+
+            string cachedFilePath = Path.Combine(tempDir, sub1Name, fileName);
+
+            Assert.IsTrue(File.Exists(cachedFilePath));
+
+            // Modify the cached file directly
+            File.WriteAllText(cachedFilePath, "MODIFIED CACHE CONTENT");
+
+            // Fetch after modifying the cache, before updating the remote
+            string secondResult = await provider.ReadAsStringAsync(resource);
+            Assert.AreEqual("MODIFIED CACHE CONTENT", secondResult, "Should return modified cache content before remote update");
+
+            // Simulate remote update: delete old file and upload new one with same display name
+
+            // Get the current file to delete it
+            IEnumerable<ShelfFileMetadata> files = await classShelfProvider.GetFilesForTenantAsync(sub1Id);
+            ShelfFileMetadata? oldFile = files
+                .Where(f => string.Equals(f.OriginalFilename, fileName, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(f => f.CreatedAt)
+                .FirstOrDefault();
+
+            if (oldFile != null)
+            {
+                // Delete the current file
+                await classShelfProvider.DeleteFileForTenantAsync(sub1Id, oldFile.Id);
+            }
+
+            // Upload new file with same display name
+            using (MemoryStream memoryStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("UPDATED REMOTE CONTENT")))
+            {
+                await classShelfProvider.WriteFileForTenantAsync(sub1Id, fileName, "text/plain", memoryStream);
+            }
+
+            // Act - Next call should detect remote is newer and update cache
+            string thirdResult = await provider.ReadAsStringAsync(resource);
+            Assert.AreEqual("UPDATED REMOTE CONTENT", thirdResult, "Should return updated remote content after remote update");
+
+            // Assert
+            Assert.AreEqual("UPDATED REMOTE CONTENT", File.ReadAllText(cachedFilePath)); // cache was updated
+
+            // Arrange again, let's create a second file with the same display name and ensure that that's the one that is used
+
+            // Upload new file with same display name
+            using (MemoryStream memoryStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("SUPER UPDATED REMOTE CONTENT")))
+            {
+                await classShelfProvider.WriteFileForTenantAsync(sub1Id, fileName, "text/plain", memoryStream);
+            }
+
+            // Let's see what value we get when reading now
+            thirdResult = await provider.ReadAsStringAsync(resource);
+            Assert.AreEqual("SUPER UPDATED REMOTE CONTENT", thirdResult, "Should return updated remote content after remote update");
+            Assert.AreEqual("SUPER UPDATED REMOTE CONTENT", File.ReadAllText(cachedFilePath)); // cache was updated
         }
     }
 }
