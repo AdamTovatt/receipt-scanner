@@ -17,7 +17,9 @@ namespace EasyReasy
         /// <param name="providerType">The type of provider to use for accessing resources in this collection.</param>
         public ResourceCollectionAttribute(Type providerType)
         {
+            ArgumentNullException.ThrowIfNull(providerType);
+
             ProviderType = providerType;
         }
     }
-} 
+}

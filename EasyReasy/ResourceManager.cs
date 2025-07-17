@@ -13,7 +13,9 @@ namespace EasyReasy
         /// Creates a new instance of <see cref="ResourceManager"/> for the specified assembly.
         /// </summary>
         /// <param name="assembly">The assembly to discover resource collections from. If null, uses the executing assembly.</param>
+        /// <param name="predefinedProviders">The predefined resource providers to register.</param>
         /// <returns>A new <see cref="ResourceManager"/> instance.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when resource mapping integrity check fails during initialization, including when providers are missing for collections or when resources cannot be found by their providers.</exception>
         public static ResourceManager CreateInstance(
             Assembly? assembly = null,
             params PredefinedResourceProvider[] predefinedProviders
@@ -41,6 +43,7 @@ namespace EasyReasy
         /// </summary>
         /// <param name="predefinedProviders">The predefined resource providers to register.</param>
         /// <returns>A new <see cref="ResourceManager"/> instance.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when resource mapping integrity check fails during initialization, including when providers are missing for collections or when resources cannot be found by their providers.</exception>
         public static ResourceManager CreateInstance(
             params PredefinedResourceProvider[] predefinedProviders
         )
@@ -82,6 +85,8 @@ namespace EasyReasy
         /// </summary>
         /// <param name="resource">The resource to read.</param>
         /// <returns>The resource content as a string.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when no provider is registered for the resource's collection or when the resource cannot be read.</exception>
+        /// <exception cref="FileNotFoundException">Thrown when the resource does not exist in the provider.</exception>
         public async Task<string> ReadAsStringAsync(Resource resource)
         {
             IResourceProvider provider = GetProviderForResource(resource);
@@ -93,6 +98,8 @@ namespace EasyReasy
         /// </summary>
         /// <param name="resource">The resource to read.</param>
         /// <returns>The resource content as a byte array.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when no provider is registered for the resource's collection or when the resource cannot be read.</exception>
+        /// <exception cref="FileNotFoundException">Thrown when the resource does not exist in the provider.</exception>
         public async Task<byte[]> ReadAsBytesAsync(Resource resource)
         {
             IResourceProvider provider = GetProviderForResource(resource);
@@ -104,6 +111,8 @@ namespace EasyReasy
         /// </summary>
         /// <param name="resource">The resource to read.</param>
         /// <returns>A stream for reading the resource.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when no provider is registered for the resource's collection or when the resource cannot be read.</exception>
+        /// <exception cref="FileNotFoundException">Thrown when the resource does not exist in the provider.</exception>
         public async Task<Stream> GetResourceStreamAsync(Resource resource)
         {
             IResourceProvider provider = GetProviderForResource(resource);
@@ -125,16 +134,28 @@ namespace EasyReasy
         /// </summary>
         /// <param name="resource">The resource to check.</param>
         /// <returns>True if the resource exists; otherwise, false.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when no provider is registered for the resource's collection or when the resource was created manually instead of being defined in a resource collection.</exception>
         public async Task<bool> ResourceExistsAsync(Resource resource)
         {
-            IResourceProvider provider = GetProviderForResource(resource);
-            return await provider.ResourceExistsAsync(resource);
+            try
+            {
+                IResourceProvider provider = GetProviderForResource(resource);
+
+                return await provider.ResourceExistsAsync(resource);
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new InvalidOperationException($"Tried to check if the resource with path \"{resource.Path}\" exists " +
+                    "but no provider for that resource could be found. This probably means you created an instance of the " +
+                    "Resource type with the constructor instead of defining the Resource you wanted in a resource collection. " +
+                    "The following exception message was from the invalid attempt to find a provider: {ex.Message}", innerException: ex);
+            }
         }
 
         /// <summary>
         /// Verifies that all mapped resources exist and are accessible.
         /// </summary>
-        /// <exception cref="InvalidOperationException">Thrown when resource mapping integrity check fails.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when resource mapping integrity check fails, including when providers are missing for collections or when resources cannot be found by their providers.</exception>
         public void VerifyResourceMappings()
         {
             StringBuilder errors = new StringBuilder();
@@ -146,7 +167,26 @@ namespace EasyReasy
 
                 if (!providers.ContainsKey(collectionType))
                 {
-                    errors.AppendLine($"❌ No provider registered for resource collection: {collectionType.Name}");
+                    // Check if this collection has a ResourceCollectionAttribute to determine the provider type
+                    ResourceCollectionAttribute? attribute = collectionType.GetCustomAttribute<ResourceCollectionAttribute>();
+                    if (attribute != null)
+                    {
+                        ConstructorInfo? parameterlessConstructor = attribute.ProviderType.GetConstructor(Type.EmptyTypes);
+                        if (parameterlessConstructor == null)
+                        {
+                            errors.AppendLine($"❌ No provider registered for resource collection: {collectionType.Name}");
+                            errors.AppendLine($"   Provider type '{attribute.ProviderType.Name}' requires constructor parameters and must be registered manually.");
+                            errors.AppendLine($"   Use CreateInstance with PredefinedResourceProvider for this collection.");
+                        }
+                        else
+                        {
+                            errors.AppendLine($"❌ No provider registered for resource collection: {collectionType.Name}");
+                        }
+                    }
+                    else
+                    {
+                        errors.AppendLine($"❌ No provider registered for resource collection: {collectionType.Name}");
+                    }
                     continue;
                 }
 
@@ -199,11 +239,20 @@ namespace EasyReasy
 
                     resourceCollections[type] = resources;
 
-                    // Auto-register the provider if it's a concrete type
+                    // Auto-register the provider if it's a concrete type with parameterless constructor
                     if (attribute.ProviderType.IsClass && !attribute.ProviderType.IsAbstract)
                     {
-                        IResourceProvider provider = (IResourceProvider)Activator.CreateInstance(attribute.ProviderType)!;
-                        providers[type] = provider;
+                        ConstructorInfo? parameterlessConstructor = attribute.ProviderType.GetConstructor(Type.EmptyTypes);
+                        if (parameterlessConstructor != null)
+                        {
+                            IResourceProvider provider = (IResourceProvider)Activator.CreateInstance(attribute.ProviderType)!;
+                            providers[type] = provider;
+                        }
+                        else
+                        {
+                            // Provider requires constructor parameters, so it needs to be registered as a predefined provider
+                            // We'll let VerifyResourceMappings handle the error reporting with a specific message
+                        }
                     }
                 }
             }
@@ -225,7 +274,11 @@ namespace EasyReasy
                 }
             }
 
-            throw new InvalidOperationException($"Resource not found in any collection: {resource.Path}");
+            throw new InvalidOperationException(
+                $"Resource not found in any collection: {resource.Path}\n" +
+                "This could mean you've created a Resource object manually using the constructor instead of using a resource defined in a resource collection. " +
+                "Resources must be defined as static fields in classes marked with [ResourceCollection] attribute." +
+                $"{(resourceCollections.Count == 0 ? " It also seems like no resource collections was discovered, are you sure you've used CreateInstance with the right Assembly? Maybe try passing Assembly.GetExecutingAssembly() to it as a first parameter." : "")}");
         }
     }
 }

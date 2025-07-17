@@ -12,6 +12,9 @@ namespace EasyReasy
 
         public Resource(string path)
         {
+            ArgumentException.ThrowIfNullOrEmpty(path);
+            ArgumentException.ThrowIfNullOrWhiteSpace(path);
+
             Path = path;
         }
 
@@ -41,11 +44,31 @@ namespace EasyReasy
         /// <returns>The content type string.</returns>
         public string GetContentType()
         {
-            string extension = System.IO.Path.GetExtension(Path).ToLowerInvariant();
+            // Handle URLs with query parameters and fragments by extracting just the path part
+            // File names are not allowed to contain "?" on windows or linux so this should be okay
+            string pathWithoutQuery = Path.Split('?')[0].Split('#')[0];
+            string extension = System.IO.Path.GetExtension(pathWithoutQuery).ToLowerInvariant();
 
             return extension switch
             {
                 ".html" => "text/html",
+                ".css" => "text/css",
+                ".js" => "application/javascript",
+                ".json" => "application/json",
+                ".xml" => "application/xml",
+                ".zip" => "application/zip",
+                ".gif" => "image/gif",
+                ".bmp" => "image/bmp",
+                ".mp4" => "video/mp4",
+                ".mp3" => "audio/mpeg",
+                ".wav" => "audio/wav",
+                ".ogg" => "audio/ogg",
+                ".webm" => "video/webm",
+                ".webp" => "image/webp",
+                ".ico" => "image/x-icon",
+                ".woff" => "font/woff",
+                ".woff2" => "font/woff2",
+                ".eot" => "application/vnd.ms-fontobject",
                 ".otf" => "font/otf",
                 ".ttf" => "font/ttf",
                 ".svg" => "image/svg+xml",

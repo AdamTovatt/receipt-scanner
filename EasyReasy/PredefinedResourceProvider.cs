@@ -24,8 +24,11 @@ namespace EasyReasy
         /// <param name="provider">The provider instance to associate with the collection type.</param>
         public PredefinedResourceProvider(Type resourceCollectionType, IResourceProvider provider)
         {
+            ArgumentNullException.ThrowIfNull(provider);
+            ArgumentNullException.ThrowIfNull(resourceCollectionType);
+
             ResourceCollectionType = resourceCollectionType;
             Provider = provider;
         }
     }
-} 
+}

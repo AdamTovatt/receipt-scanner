@@ -1,4 +1,5 @@
 using Microsoft.Extensions.FileProviders;
+using System.IO;
 using System.Reflection;
 
 namespace EasyReasy
@@ -40,7 +41,12 @@ namespace EasyReasy
         public async Task<Stream> GetResourceStreamAsync(Resource resource)
         {
             await Task.CompletedTask;
-            return GetFileInfo(resource).CreateReadStream();
+            IFileInfo fileInfo = GetFileInfo(resource);
+
+            if (!fileInfo.Exists)
+                throw new FileNotFoundException($"Resource '{resource.Path}' not found.");
+
+            return fileInfo.CreateReadStream();
         }
 
         /// <summary>
@@ -86,14 +92,7 @@ namespace EasyReasy
                 return fileInfo;
             }
 
-            fileInfo = fileProvider.GetFileInfo($"Resources/{path}");
-
-            if (fileInfo.Exists)
-            {
-                return fileInfo;
-            }
-
-            throw new FileNotFoundException($"Resource '{path}' not found.");
+            return fileProvider.GetFileInfo($"Resources/{path}");
         }
     }
 }
