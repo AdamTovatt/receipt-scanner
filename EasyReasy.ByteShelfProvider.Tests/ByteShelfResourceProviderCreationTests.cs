@@ -48,7 +48,7 @@ namespace EasyReasy.Tests
             string apiKey = "test-api-key";
 
             // Act
-            PredefinedResourceProvider provider = ByteShelfResourceProvider.Create(
+            PredefinedResourceProvider provider = ByteShelfResourceProvider.CreatePredefined(
                 resourceCollectionType: typeof(TestResourceCollection),
                 baseUrl: baseUrl,
                 apiKey: apiKey);
@@ -68,7 +68,7 @@ namespace EasyReasy.Tests
             string apiKey = "test-api-key";
 
             // Act & Assert
-            Assert.ThrowsException<ArgumentNullException>(() => ByteShelfResourceProvider.Create(
+            Assert.ThrowsException<ArgumentNullException>(() => ByteShelfResourceProvider.CreatePredefined(
                 resourceCollectionType: typeof(TestResourceCollection),
                 baseUrl: baseUrl!,
                 apiKey: apiKey));
@@ -82,7 +82,7 @@ namespace EasyReasy.Tests
             string? apiKey = null;
 
             // Act & Assert
-            Assert.ThrowsException<ArgumentNullException>(() => ByteShelfResourceProvider.Create(
+            Assert.ThrowsException<ArgumentNullException>(() => ByteShelfResourceProvider.CreatePredefined(
                 resourceCollectionType: typeof(TestResourceCollection),
                 baseUrl: baseUrl,
                 apiKey: apiKey!));
@@ -96,7 +96,7 @@ namespace EasyReasy.Tests
             string apiKey = "test-api-key";
 
             // Act & Assert
-            Assert.ThrowsException<ArgumentException>(() => ByteShelfResourceProvider.Create(
+            Assert.ThrowsException<ArgumentException>(() => ByteShelfResourceProvider.CreatePredefined(
                 resourceCollectionType: typeof(TestResourceCollection),
                 baseUrl: baseUrl,
                 apiKey: apiKey));
@@ -110,7 +110,7 @@ namespace EasyReasy.Tests
             string apiKey = "";
 
             // Act & Assert
-            Assert.ThrowsException<ArgumentException>(() => ByteShelfResourceProvider.Create(
+            Assert.ThrowsException<ArgumentException>(() => ByteShelfResourceProvider.CreatePredefined(
                 resourceCollectionType: typeof(TestResourceCollection),
                 baseUrl: baseUrl,
                 apiKey: apiKey));
@@ -124,7 +124,7 @@ namespace EasyReasy.Tests
             string apiKey = "test-api-key";
 
             // Act & Assert
-            Assert.ThrowsException<ArgumentException>(() => ByteShelfResourceProvider.Create(
+            Assert.ThrowsException<ArgumentException>(() => ByteShelfResourceProvider.CreatePredefined(
                 resourceCollectionType: typeof(TestResourceCollection),
                 baseUrl: baseUrl,
                 apiKey: apiKey));
@@ -138,7 +138,7 @@ namespace EasyReasy.Tests
             string apiKey = "   ";
 
             // Act & Assert
-            Assert.ThrowsException<ArgumentException>(() => ByteShelfResourceProvider.Create(
+            Assert.ThrowsException<ArgumentException>(() => ByteShelfResourceProvider.CreatePredefined(
                 resourceCollectionType: typeof(TestResourceCollection),
                 baseUrl: baseUrl,
                 apiKey: apiKey));
@@ -152,7 +152,7 @@ namespace EasyReasy.Tests
             string apiKey = "test-api-key";
 
             // Act & Assert
-            PredefinedResourceProvider provider = ByteShelfResourceProvider.Create(
+            PredefinedResourceProvider provider = ByteShelfResourceProvider.CreatePredefined(
                 resourceCollectionType: typeof(TestResourceCollection),
                 baseUrl: baseUrl,
                 apiKey: apiKey);
@@ -168,7 +168,7 @@ namespace EasyReasy.Tests
             string apiKey = "test-api-key";
 
             // Act & Assert
-            PredefinedResourceProvider provider = ByteShelfResourceProvider.Create(
+            PredefinedResourceProvider provider = ByteShelfResourceProvider.CreatePredefined(
                 resourceCollectionType: typeof(TestResourceCollection),
                 baseUrl: baseUrl,
                 apiKey: apiKey);
@@ -184,7 +184,7 @@ namespace EasyReasy.Tests
             string apiKey = "test-api-key";
 
             // Act & Assert
-            PredefinedResourceProvider provider = ByteShelfResourceProvider.Create(
+            PredefinedResourceProvider provider = ByteShelfResourceProvider.CreatePredefined(
                 resourceCollectionType: typeof(TestResourceCollection),
                 baseUrl: baseUrl,
                 apiKey: apiKey);
@@ -201,7 +201,7 @@ namespace EasyReasy.Tests
             IResourceCache? cache = null;
 
             // Act & Assert
-            PredefinedResourceProvider provider = ByteShelfResourceProvider.Create(
+            PredefinedResourceProvider provider = ByteShelfResourceProvider.CreatePredefined(
                 resourceCollectionType: typeof(TestResourceCollection),
                 baseUrl: baseUrl,
                 apiKey: apiKey,
@@ -219,7 +219,7 @@ namespace EasyReasy.Tests
             IResourceCache cache = new MockResourceCache();
 
             // Act & Assert
-            PredefinedResourceProvider provider = ByteShelfResourceProvider.Create(
+            PredefinedResourceProvider provider = ByteShelfResourceProvider.CreatePredefined(
                 resourceCollectionType: typeof(TestResourceCollection),
                 baseUrl: baseUrl,
                 apiKey: apiKey,
@@ -237,7 +237,7 @@ namespace EasyReasy.Tests
             string rootSubTenantId = "tenant-123";
 
             // Act & Assert
-            PredefinedResourceProvider provider = ByteShelfResourceProvider.Create(
+            PredefinedResourceProvider provider = ByteShelfResourceProvider.CreatePredefined(
                 resourceCollectionType: typeof(TestResourceCollection),
                 baseUrl: baseUrl,
                 apiKey: apiKey,
@@ -259,7 +259,7 @@ namespace EasyReasy.Tests
             IResourceCache cache = new MockResourceCache();
 
             // Act & Assert
-            PredefinedResourceProvider provider = ByteShelfResourceProvider.Create(
+            PredefinedResourceProvider provider = ByteShelfResourceProvider.CreatePredefined(
                 resourceCollectionType: typeof(TestResourceCollection),
                 baseUrl: baseUrl,
                 apiKey: apiKey,

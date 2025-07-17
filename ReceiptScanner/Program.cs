@@ -30,7 +30,7 @@ namespace ReceiptScanner
             });
 
             // Break out the creation of the PredefinedResourceProvider for models
-            PredefinedResourceProvider modelsProvider = ByteShelfResourceProvider.Create(
+            PredefinedResourceProvider modelsProvider = ByteShelfResourceProvider.CreatePredefined(
                 resourceCollectionType: typeof(Resources.Models),
                 baseUrl: EnvironmentVariables.GetVariable(EnvironmentVariable.ByteShelfUrl),
                 apiKey: EnvironmentVariables.GetVariable(EnvironmentVariable.ByteShelfApiKey));

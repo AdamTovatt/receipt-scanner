@@ -204,7 +204,7 @@ namespace EasyReasy.ByteShelfProvider
         /// <param name="rootSubTenantId">Optional root subtenant ID to start from.</param>
         /// <param name="cache">Optional cache implementation for downloaded resources.</param>
         /// <returns>A PredefinedResourceProvider for the specified resource collection type.</returns>
-        public static PredefinedResourceProvider Create(Type resourceCollectionType, string baseUrl, string apiKey, string? rootSubTenantId = null, IResourceCache? cache = null)
+        public static PredefinedResourceProvider CreatePredefined(Type resourceCollectionType, string baseUrl, string apiKey, string? rootSubTenantId = null, IResourceCache? cache = null)
         {
             ArgumentException.ThrowIfNullOrEmpty(baseUrl);
             ArgumentException.ThrowIfNullOrWhiteSpace(baseUrl);

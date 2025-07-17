@@ -2,18 +2,46 @@ using ReceiptScanner.Models;
 using ReceiptScanner.Services;
 using ReceiptScanner;
 using EasyReasy;
+using EasyReasy.EnvironmentVariables;
+using ByteShelfCommon;
+using EasyReasy.ByteShelfProvider;
 
 namespace ReceiptScannerTests
 {
     [TestClass]
     public class PGNetPredictorTests
     {
+        [EnvironmentVariableNameContainer]
+        private static class PGNetPredictorTestsVariables
+        {
+            [EnvironmentVariableName(5)]
+            public static string ByteShelfBackendUrl = "BYTE_SHELF_URL";
+            [EnvironmentVariableName(5)]
+            public static string ByteShelfApiKey = "BYTE_SHELF_API_KEY";
+        }
+
         private static ResourceManager _resourceManager = null!;
 
         [ClassInitialize]
         public static void BeforeAll(TestContext testContext)
         {
-            _resourceManager = ResourceManager.CreateInstance();
+            if (!File.Exists("TestVariables.txt"))
+            {
+                File.WriteAllText("TestVariables.txt", "VARIABLE1=value1\nVARIABLE2=value2");
+            }
+
+            EnvironmentVariables.LoadFromFile("TestVariables.txt");
+
+            EnvironmentVariables.ValidateVariableNamesIn(typeof(PGNetPredictorTestsVariables));
+
+            string apiKey = EnvironmentVariables.GetVariable(PGNetPredictorTestsVariables.ByteShelfApiKey);
+            string url = EnvironmentVariables.GetVariable(PGNetPredictorTestsVariables.ByteShelfBackendUrl);
+
+            FileSystemCache fileSystemCache = new FileSystemCache("CachedResources");
+
+            PredefinedResourceProvider predefinedByteShelfProvider = ByteShelfResourceProvider.CreatePredefined(typeof(Resources.Models), url, apiKey, cache: fileSystemCache);
+
+            _resourceManager = ResourceManager.CreateInstance(predefinedByteShelfProvider);
         }
 
         [TestMethod]
