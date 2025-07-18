@@ -7,7 +7,7 @@ namespace ReceiptScanner
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -36,7 +36,8 @@ namespace ReceiptScanner
                 apiKey: EnvironmentVariables.GetVariable(EnvironmentVariable.ByteShelfApiKey));
 
             // Register ResourceManager as a singleton with predefined providers
-            builder.Services.AddSingleton(_ => ResourceManager.CreateInstanceAsync(modelsProvider));
+            ResourceManager resourceManager = await ResourceManager.CreateInstanceAsync(modelsProvider);
+            builder.Services.AddSingleton(resourceManager);
 
             // Register our services
             builder.Services.AddSingleton<IModelService, ModelService>();
