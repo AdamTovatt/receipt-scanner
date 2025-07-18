@@ -1,7 +1,3 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
-
 namespace EasyReasy
 {
     /// <summary>
@@ -9,6 +5,8 @@ namespace EasyReasy
     /// </summary>
     public class FileSystemCache : IResourceCache
     {
+        public string StoragePath => storagePath;
+
         private readonly string storagePath;
 
         public FileSystemCache(string storagePath)

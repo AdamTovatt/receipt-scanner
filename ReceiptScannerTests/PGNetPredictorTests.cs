@@ -53,8 +53,15 @@ namespace ReceiptScannerTests
         public async Task ProcessImageAsync_WithTestReceipt_DetectsText()
         {
             IResourceProvider englishModelProvider = _testProjectResourceManager.GetProviderForResource(Resources.Models.TesseractEnglishModel);
+            ICacheableResourceProvider? cacheableResourceProvider = englishModelProvider as ICacheableResourceProvider;
 
-            string ocrResult = await TestPredictor2.PredictAsync(await _testProjectResourceManager.ReadAsBytesAsync(TestResources.TestFiles.TestReceipt01), );
+            Assert.IsNotNull(cacheableResourceProvider);
+
+            FileSystemCache? fileSystemCache = cacheableResourceProvider.GetCache() as FileSystemCache;
+
+            Assert.IsNotNull(fileSystemCache);
+
+            string ocrResult = await TestPredictor2.PredictAsync(await _testProjectResourceManager.ReadAsBytesAsync(TestResources.TestFiles.TestReceipt01), fileSystemCache.StoragePath, "en");
             ocrResult = await TestPredictor.PredictAsync(await _testProjectResourceManager.ReadAsBytesAsync(TestResources.TestFiles.TestReceipt01));
 
             IModelService modelService = new ModelService(_mainProjectResourceManager);
