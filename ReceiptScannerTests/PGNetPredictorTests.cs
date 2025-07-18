@@ -5,6 +5,7 @@ using EasyReasy;
 using EasyReasy.EnvironmentVariables;
 using EasyReasy.ByteShelfProvider;
 using System.Reflection;
+using Microsoft.AspNetCore.Http;
 
 namespace ReceiptScannerTests
 {
@@ -51,16 +52,20 @@ namespace ReceiptScannerTests
         [TestMethod]
         public async Task ProcessImageAsync_WithTestReceipt_DetectsText()
         {
-            // Load the test receipt image
-            byte[] imageBytes = await _testProjectResourceManager.ReadAsBytesAsync(TestResources.TestFiles.TestReceipt01);
-            using MemoryStream imageStream = new MemoryStream(imageBytes);
+            IResourceProvider englishModelProvider = _testProjectResourceManager.GetProviderForResource(Resources.Models.TesseractEnglishModel);
 
-            // Load the model
-            byte[] modelBytes = await _mainProjectResourceManager.ReadAsBytesAsync(Resources.Models.PgNetModel);
-            using PGNetPredictor predictor = new PGNetPredictor(modelBytes, _mainProjectResourceManager);
+            string ocrResult = await TestPredictor2.PredictAsync(await _testProjectResourceManager.ReadAsBytesAsync(TestResources.TestFiles.TestReceipt01), );
+            ocrResult = await TestPredictor.PredictAsync(await _testProjectResourceManager.ReadAsBytesAsync(TestResources.TestFiles.TestReceipt01));
 
-            // Act
-            ReceiptData result = await predictor.ProcessImageAsync(imageStream);
+            IModelService modelService = new ModelService(_mainProjectResourceManager);
+            ReceiptScannerService scanner = new ReceiptScannerService(modelService, _mainProjectResourceManager);
+
+            ReceiptData? result;
+            using (Stream fileStream = await _testProjectResourceManager.GetResourceStreamAsync(TestResources.TestFiles.TestReceipt01))
+            {
+                IFormFile file = new FormFile(fileStream, 0, fileStream.Length, "test", Path.GetFileName(TestResources.TestFiles.TestReceipt01));
+                result = await scanner.ScanReceiptAsync(file);
+            }
 
             // Assert
             Assert.IsNotNull(result);

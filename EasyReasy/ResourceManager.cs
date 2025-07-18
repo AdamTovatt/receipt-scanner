@@ -252,6 +252,8 @@ namespace EasyReasy
 
         private void DiscoverResourceCollections()
         {
+            Dictionary<string, List<Type>> resourcePathToCollections = new Dictionary<string, List<Type>>();
+
             foreach (Type type in assembly.GetTypes())
             {
                 ResourceCollectionAttribute? attribute = type.GetCustomAttribute<ResourceCollectionAttribute>();
@@ -268,6 +270,13 @@ namespace EasyReasy
                             if (value is Resource resource)
                             {
                                 resources.Add(resource);
+                                
+                                // Track which collections contain each resource path
+                                if (!resourcePathToCollections.ContainsKey(resource.Path))
+                                {
+                                    resourcePathToCollections[resource.Path] = new List<Type>();
+                                }
+                                resourcePathToCollections[resource.Path].Add(type);
                             }
                         }
                     }
@@ -310,6 +319,42 @@ namespace EasyReasy
                     }
                 }
             }
+
+            // Validate that no resource paths are duplicated across collections
+            ValidateResourcePathUniqueness(resourcePathToCollections);
+        }
+
+        /// <summary>
+        /// Validates that resource paths are unique across all resource collections.
+        /// </summary>
+        /// <param name="resourcePathToCollections">Dictionary mapping resource paths to the collections that contain them.</param>
+        /// <exception cref="InvalidOperationException">Thrown when duplicate resource paths are found across different collections.</exception>
+        private static void ValidateResourcePathUniqueness(Dictionary<string, List<Type>> resourcePathToCollections)
+        {
+            StringBuilder errors = new StringBuilder();
+            bool hasErrors = false;
+
+            foreach (KeyValuePair<string, List<Type>> entry in resourcePathToCollections)
+            {
+                string resourcePath = entry.Key;
+                List<Type> collections = entry.Value;
+
+                if (collections.Count > 1)
+                {
+                    hasErrors = true;
+                    errors.AppendLine($"❌ Duplicate resource path '{resourcePath}' found in multiple collections:");
+                    foreach (Type collection in collections)
+                    {
+                        errors.AppendLine($"   - {collection.Name}");
+                    }
+                    errors.AppendLine();
+                }
+            }
+
+            if (hasErrors)
+            {
+                throw new InvalidOperationException($"Resource path conflicts detected:\n{errors}");
+            }
         }
 
         /// <summary>
@@ -338,7 +383,13 @@ namespace EasyReasy
             throw new NotSupportedException($"Parameter type '{parameterType.Name}' is not supported for automatic injection.");
         }
 
-        private IResourceProvider GetProviderForResource(Resource resource)
+        /// <summary>
+        /// Gets the provider for the specified resource.
+        /// </summary>
+        /// <param name="resource">The resource to get the provider for.</param>
+        /// <returns>The provider that handles the specified resource.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when no provider is registered for the resource's collection or when the resource was created manually instead of being defined in a resource collection.</exception>
+        public IResourceProvider GetProviderForResource(Resource resource)
         {
             // Find which collection this resource belongs to
             foreach (KeyValuePair<Type, List<Resource>> collection in resourceCollections)

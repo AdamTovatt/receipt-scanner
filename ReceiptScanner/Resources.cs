@@ -18,6 +18,9 @@ namespace ReceiptScanner
             /// The main PGNet model for text detection and recognition.
             /// </summary>
             public static readonly Resource PgNetModel = new Resource("PgNet/pgnet.onnx");
+
+            public static readonly Resource TesseractEnglishModel = new Resource("Tesseract/eng.traineddata");
+            public static readonly Resource TesseractSwedishModel = new Resource("Tesseract/swe.traineddata");
         }
 
         /// <summary>

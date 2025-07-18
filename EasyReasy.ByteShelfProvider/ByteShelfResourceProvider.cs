@@ -1,4 +1,3 @@
-using System.Text;
 using ByteShelfClient;
 using ByteShelfCommon;
 
@@ -8,7 +7,7 @@ namespace EasyReasy.ByteShelfProvider
     /// Provides access to resources via ByteShelf, mapping Resource.Path directories to subtenant hierarchy.
     /// Supports optional local caching of downloaded resources.
     /// </summary>
-    public class ByteShelfResourceProvider : IResourceProvider
+    public class ByteShelfResourceProvider : IResourceProvider, ICacheableResourceProvider
     {
         private readonly IShelfFileProvider shelfProvider;
         private readonly string? rootSubTenantId;
@@ -31,6 +30,15 @@ namespace EasyReasy.ByteShelfProvider
             shelfProvider = new HttpShelfFileProvider(httpClient, apiKey);
             this.rootSubTenantId = rootSubTenantId;
             this.cache = cache;
+        }
+
+        /// <summary>
+        /// Gets the cache instance used by this resource provider.
+        /// </summary>
+        /// <returns>The cache instance, or null if no cache is configured.</returns>
+        public IResourceCache? GetCache()
+        {
+            return cache;
         }
 
         public async Task<bool> ResourceExistsAsync(Resource resource)

@@ -1,5 +1,4 @@
 using ReceiptScanner.Models;
-using Microsoft.AspNetCore.Http;
 
 namespace ReceiptScanner.Services
 {
