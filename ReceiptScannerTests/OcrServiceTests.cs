@@ -1,5 +1,6 @@
 using ReceiptScanner.Models;
 using ReceiptScanner.Preprocessing.Preprocessors;
+using ReceiptScanner.Preprocessing.Preprocessors.EdgeDetection;
 using ReceiptScanner;
 using EasyReasy;
 using EasyReasy.EnvironmentVariables;
@@ -9,6 +10,7 @@ using ReceiptScanner.Preprocessing;
 using ReceiptScanner.Services.Ocr;
 using ReceiptScanner.Providers.Language;
 using ReceiptScanner.Providers.Models;
+using OpenCvSharp;
 
 namespace ReceiptScannerTests
 {
@@ -48,6 +50,38 @@ namespace ReceiptScannerTests
             Assembly mainProjectAssembly = Assembly.GetAssembly(typeof(Program)) ?? throw new Exception($"Could not find the assembly of {nameof(Program)}");
             _mainProjectResourceManager = await ResourceManager.CreateInstanceAsync(mainProjectAssembly, predefinedByteShelfProvider);
             _testProjectResourceManager = await ResourceManager.CreateInstanceAsync();
+        }
+
+        [TestMethod]
+        [DynamicData(nameof(GetTestResources), DynamicDataSourceType.Method)]
+        public async Task Preprocess_WithTestReceipt_DetectsAndCropsReceipt(string testResource)
+        {
+            // Arrange
+            ReceiptEdgeDetectionPreprocessor preprocessor = ReceiptEdgeDetectionFactory.CreateDefault();
+            byte[] imageBytes = await _testProjectResourceManager.ReadAsBytesAsync(new Resource(testResource));
+
+            // Convert bytes to Mat
+            Mat originalImage = Mat.FromImageData(imageBytes);
+
+            // Act
+            Mat processedImage = preprocessor.Preprocess(originalImage);
+
+            // Assert
+            Assert.IsNotNull(processedImage);
+            Assert.IsFalse(processedImage.Empty());
+
+            // Save the processed image for inspection
+            string outputPath = "ReceiptEdgeDetectionPreprocessorTestOutput.png";
+            processedImage.SaveImage(outputPath);
+            Console.WriteLine($"Processed image saved to: {Path.GetFullPath(outputPath)}");
+
+            // Log image dimensions for comparison
+            Console.WriteLine($"Original image size: {originalImage.Width}x{originalImage.Height}");
+            Console.WriteLine($"Processed image size: {processedImage.Width}x{processedImage.Height}");
+
+            // Cleanup
+            originalImage.Dispose();
+            processedImage.Dispose();
         }
 
         [TestMethod]
