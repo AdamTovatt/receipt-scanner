@@ -26,11 +26,11 @@ namespace EasyReasy
         /// <returns>The resource content as a byte array.</returns>
         async Task<byte[]> ReadAsBytesAsync(Resource resource)
         {
-            using (Stream resourceStream = await GetResourceStreamAsync(resource))
+            using (Stream resourceStream = await GetResourceStreamAsync(resource).ConfigureAwait(false))
             {
                 using (MemoryStream memoryStream = new MemoryStream())
                 {
-                    await resourceStream.CopyToAsync(memoryStream);
+                    await resourceStream.CopyToAsync(memoryStream).ConfigureAwait(false);
                     return memoryStream.ToArray();
                 }
             }
@@ -43,11 +43,11 @@ namespace EasyReasy
         /// <returns>The resource content as a string.</returns>
         async Task<string> ReadAsStringAsync(Resource resource)
         {
-            using (Stream resourceStream = await GetResourceStreamAsync(resource))
+            using (Stream resourceStream = await GetResourceStreamAsync(resource).ConfigureAwait(false))
             {
                 using (StreamReader reader = new StreamReader(resourceStream))
                 {
-                    return await reader.ReadToEndAsync();
+                    return await reader.ReadToEndAsync().ConfigureAwait(false);
                 }
             }
         }

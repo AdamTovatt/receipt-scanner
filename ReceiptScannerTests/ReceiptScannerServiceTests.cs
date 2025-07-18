@@ -14,9 +14,9 @@ namespace ReceiptScannerTests
         private static ResourceManager _resourceManager = null!;
 
         [ClassInitialize]
-        public static void BeforeAll(TestContext testContext)
+        public static async Task BeforeAll(TestContext testContext)
         {
-            _resourceManager = ResourceManager.CreateInstance();
+            _resourceManager = await ResourceManager.CreateInstanceAsync();
         }
 
         [TestMethod]
@@ -25,7 +25,7 @@ namespace ReceiptScannerTests
             try
             {
                 // Load model bytes
-                byte[] modelBytes = await _resourceManager.ReadAsBytesAsync(Resources.Models.ReceiptModel);
+                byte[] modelBytes = await _resourceManager.ReadAsBytesAsync(Resources.Models.PgNetModel);
                 Console.WriteLine($"Model size: {modelBytes.Length / (1024 * 1024):F2} MB");
 
                 // Create inference session to inspect model

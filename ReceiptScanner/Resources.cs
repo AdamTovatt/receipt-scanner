@@ -17,7 +17,7 @@ namespace ReceiptScanner
             /// <summary>
             /// The main PGNet model for text detection and recognition.
             /// </summary>
-            public static readonly Resource ReceiptModel = new Resource("Models/pgnet.onnx");
+            public static readonly Resource PgNetModel = new Resource("PgNet/pgnet.onnx");
         }
 
         /// <summary>

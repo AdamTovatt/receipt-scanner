@@ -6,36 +6,40 @@ namespace EasyReasy.Tests
     public class ResourceManagerTests
     {
         [TestMethod]
-        public void CreateInstance_WithAssembly_ReturnsValidInstance()
+        public async Task CreateInstance_WithAssembly_ReturnsValidInstance()
         {
             // Arrange & Act
             ParameterizedFakeResourceProvider fakeProvider = new ParameterizedFakeResourceProvider("test", true);
             PredefinedResourceProvider predefinedProvider = fakeProvider.AsPredefinedFor(typeof(TestResourceCollection));
-            ResourceManager manager = ResourceManager.CreateInstance(Assembly.GetExecutingAssembly(), predefinedProvider);
+            ResourceManager manager = await ResourceManager.CreateInstanceAsync(Assembly.GetExecutingAssembly(), predefinedProvider);
 
             // Assert
             Assert.IsNotNull(manager);
         }
 
         [TestMethod]
-        public void CreateInstance_WithoutAssembly_ReturnsValidInstance()
+        public async Task CreateInstance_ForAssemblyWithoutResources_ReturnsValidInstance()
         {
             // Arrange & Act
-            ResourceManager manager = ResourceManager.CreateInstance();
+            Assembly? assembly = Assembly.GetAssembly(typeof(EmbeddedResourceProvider)); // Use the EasyReasy assembly
+
+            Assert.IsNotNull(assembly);
+
+            ResourceManager manager = await ResourceManager.CreateInstanceAsync(assembly);
 
             // Assert
             Assert.IsNotNull(manager);
         }
 
         [TestMethod]
-        public void CreateInstance_WithPredefinedProviders_RegistersProviders()
+        public async Task CreateInstance_WithPredefinedProviders_RegistersProviders()
         {
             // Arrange
             ParameterizedFakeResourceProvider fakeProvider = new ParameterizedFakeResourceProvider("test", true);
             PredefinedResourceProvider predefinedProvider = fakeProvider.AsPredefinedFor(typeof(TestResourceCollection));
 
             // Act
-            ResourceManager manager = ResourceManager.CreateInstance(Assembly.GetExecutingAssembly(), predefinedProvider);
+            ResourceManager manager = await ResourceManager.CreateInstanceAsync(Assembly.GetExecutingAssembly(), predefinedProvider);
 
             // Assert
             Assert.IsNotNull(manager);
@@ -47,7 +51,7 @@ namespace EasyReasy.Tests
             // Arrange
             ParameterizedFakeResourceProvider fakeProvider = new ParameterizedFakeResourceProvider("test", true);
             PredefinedResourceProvider predefinedProvider = fakeProvider.AsPredefinedFor(typeof(TestResourceCollection));
-            ResourceManager manager = ResourceManager.CreateInstance(Assembly.GetExecutingAssembly(), predefinedProvider);
+            ResourceManager manager = await ResourceManager.CreateInstanceAsync(Assembly.GetExecutingAssembly(), predefinedProvider);
             Resource testResource = TestResourceCollection.TestResource;
 
             // Act
@@ -63,7 +67,7 @@ namespace EasyReasy.Tests
             // Arrange
             ParameterizedFakeResourceProvider fakeProvider = new ParameterizedFakeResourceProvider("test", true);
             PredefinedResourceProvider predefinedProvider = fakeProvider.AsPredefinedFor(typeof(TestResourceCollection));
-            ResourceManager manager = ResourceManager.CreateInstance(Assembly.GetExecutingAssembly(), predefinedProvider);
+            ResourceManager manager = await ResourceManager.CreateInstanceAsync(Assembly.GetExecutingAssembly(), predefinedProvider);
             Resource testResource = TestResourceCollection.TestResource;
 
             // Act
@@ -81,7 +85,7 @@ namespace EasyReasy.Tests
             ParameterizedFakeResourceProvider fakeProvider = new ParameterizedFakeResourceProvider("test", true);
             PredefinedResourceProvider predefinedProvider = fakeProvider.AsPredefinedFor(typeof(TestResourceCollection));
 
-            ResourceManager manager = ResourceManager.CreateInstance(Assembly.GetExecutingAssembly(), predefinedProvider);
+            ResourceManager manager = await ResourceManager.CreateInstanceAsync(Assembly.GetExecutingAssembly(), predefinedProvider);
             Resource testResource = TestResourceCollection.TestResource;
 
             // Act
@@ -99,7 +103,7 @@ namespace EasyReasy.Tests
             ParameterizedFakeResourceProvider fakeProvider = new ParameterizedFakeResourceProvider("test", true);
             PredefinedResourceProvider predefinedProvider = fakeProvider.AsPredefinedFor(typeof(TestResourceCollection));
 
-            ResourceManager manager = ResourceManager.CreateInstance(Assembly.GetExecutingAssembly(), predefinedProvider);
+            ResourceManager manager = await ResourceManager.CreateInstanceAsync(Assembly.GetExecutingAssembly(), predefinedProvider);
             Resource testResource = TestResourceCollection.TestResource;
 
             // Act
@@ -115,7 +119,7 @@ namespace EasyReasy.Tests
             // Arrange
             ParameterizedFakeResourceProvider fakeProvider = new ParameterizedFakeResourceProvider("test", true);
             PredefinedResourceProvider predefinedProvider = fakeProvider.AsPredefinedFor(typeof(TestResourceCollection));
-            ResourceManager manager = ResourceManager.CreateInstance(Assembly.GetExecutingAssembly(), predefinedProvider);
+            ResourceManager manager = await ResourceManager.CreateInstanceAsync(Assembly.GetExecutingAssembly(), predefinedProvider);
             Resource testResource = new Resource("nonexistent.txt");
 
             // Act & Assert
@@ -162,43 +166,84 @@ namespace EasyReasy.Tests
         }
 
         [TestMethod]
-        public void VerifyResourceMappings_WithValidProviders_DoesNotThrow()
+        public async Task VerifyResourceMappings_WithValidProviders_DoesNotThrow()
         {
             // Arrange
             ParameterizedFakeResourceProvider fakeProvider = new ParameterizedFakeResourceProvider("test", true);
             PredefinedResourceProvider predefinedProvider = fakeProvider.AsPredefinedFor(typeof(TestResourceCollection));
-            ResourceManager manager = ResourceManager.CreateInstance(Assembly.GetExecutingAssembly(), predefinedProvider);
+            ResourceManager manager = await ResourceManager.CreateInstanceAsync(Assembly.GetExecutingAssembly(), predefinedProvider);
 
             // Act & Assert
-            manager.VerifyResourceMappings(); // Should not throw when providers are properly registered
+            await manager.VerifyResourceMappingsAsync(); // Should not throw when providers are properly registered
         }
 
         [TestMethod]
-        public void VerifyResourceMappings_WithAutoRegisteredProviders_DoesNotThrow()
+        public async Task CreateInstanceAndVerifyResourceMappings_WithAutoRegisteredProviders_DoesNotThrow()
         {
             // Arrange
             // Provide predefined provider for TestResourceCollection (which needs it)
             // AutoRegisteredResourceCollection should be auto-registered
             ParameterizedFakeResourceProvider fakeProvider = new ParameterizedFakeResourceProvider("test", true);
             PredefinedResourceProvider predefinedProvider = fakeProvider.AsPredefinedFor(typeof(TestResourceCollection));
-            ResourceManager manager = ResourceManager.CreateInstance(Assembly.GetExecutingAssembly(), predefinedProvider);
+            ResourceManager manager = await ResourceManager.CreateInstanceAsync(Assembly.GetExecutingAssembly(), predefinedProvider);
 
             // Act & Assert
             // Should not throw because:
             // - TestResourceCollection has predefined provider
             // - AutoRegisteredResourceCollection is auto-registered (FakeResourceProvider has parameterless constructor)
-            manager.VerifyResourceMappings();
+            await manager.VerifyResourceMappingsAsync();
         }
 
         [TestMethod]
-        public void VerifyResourceMappings_WithMissingProvider_ThrowsException()
+        public async Task CreateInstance_WithMissingProvider_ThrowsException()
         {
             // Arrange & Act & Assert
             // Create manager with no predefined providers
             // AutoRegisteredResourceCollection will be auto-registered (FakeResourceProvider has parameterless constructor)
             // TestResourceCollection will NOT be auto-registered (ParameterizedFakeResourceProvider has constructor parameters)
             // Should throw because TestResourceCollection has no registered provider
-            Assert.ThrowsException<InvalidOperationException>(() => ResourceManager.CreateInstance(Assembly.GetExecutingAssembly()));
+            await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await ResourceManager.CreateInstanceAsync(Assembly.GetExecutingAssembly()));
+        }
+
+        [TestMethod]
+        public async Task AutoRegistration_WithAllOptionalConstructor_Works()
+        {
+            // Arrange: We still need to provide the ParameterizedFakeResourceProvider
+            // but the other providers should auto-register
+            ParameterizedFakeResourceProvider fakeProvider = new ParameterizedFakeResourceProvider("test", true);
+            PredefinedResourceProvider predefinedProvider = fakeProvider.AsPredefinedFor(typeof(TestResourceCollection));
+
+            ResourceManager manager = await ResourceManager.CreateInstanceAsync(predefinedProvider);
+            Resource testResource = AllOptionalResourceCollection.TestResource;
+
+            // Act
+            bool exists = await manager.ResourceExistsAsync(testResource);
+            string content = await manager.ReadAsStringAsync(testResource);
+
+            // Assert
+            Assert.IsTrue(exists);
+            Assert.AreEqual("All optional content", content);
+        }
+
+        [TestMethod]
+        public async Task AutoRegistration_WithAssemblyParameter_InjectsCorrectAssembly()
+        {
+            // Arrange
+            ParameterizedFakeResourceProvider fakeProvider = new ParameterizedFakeResourceProvider("test", true);
+            PredefinedResourceProvider predefinedProvider = fakeProvider.AsPredefinedFor(typeof(TestResourceCollection));
+
+            Assembly expectedAssembly = Assembly.GetExecutingAssembly();
+            ResourceManager manager = await ResourceManager.CreateInstanceAsync(expectedAssembly, predefinedProvider);
+
+            // Act
+            // The provider should be auto-registered with the correct assembly
+            // We can verify this by checking if the resource collection's provider was created correctly
+            bool resourceExists = manager.ResourceExistsAsync(AssemblyAwareResourceCollection.TestResource).Result;
+
+            // Assert
+            Assert.IsTrue(resourceExists);
+            // The provider should have received the correct assembly
+            Assert.AreEqual(expectedAssembly, AssemblyAwareTestProvider.LastReceivedAssembly);
         }
 
         // Test resource collection that can be auto-registered (parameterless constructor)
@@ -243,21 +288,6 @@ namespace EasyReasy.Tests
                 }
                 throw new FileNotFoundException($"Resource '{resource.Path}' not found.");
             }
-
-            public async Task<byte[]> ReadAsBytesAsync(Resource resource)
-            {
-                using Stream stream = await GetResourceStreamAsync(resource);
-                using MemoryStream memoryStream = new MemoryStream();
-                await stream.CopyToAsync(memoryStream);
-                return memoryStream.ToArray();
-            }
-
-            public async Task<string> ReadAsStringAsync(Resource resource)
-            {
-                using Stream stream = await GetResourceStreamAsync(resource);
-                using StreamReader reader = new StreamReader(stream);
-                return await reader.ReadToEndAsync();
-            }
         }
 
         // Simple fake resource provider for testing (no constructor parameters)
@@ -279,20 +309,78 @@ namespace EasyReasy.Tests
                 }
                 throw new FileNotFoundException($"Resource '{resource.Path}' not found.");
             }
+        }
 
-            public async Task<byte[]> ReadAsBytesAsync(Resource resource)
+        // Resource collection using a provider with all-optional constructor parameters
+        [ResourceCollection(typeof(AllOptionalFakeResourceProvider))]
+        public static class AllOptionalResourceCollection
+        {
+            public static readonly Resource TestResource = new Resource("alloptional.txt");
+        }
+
+        // Provider with all-optional constructor parameters
+        private class AllOptionalFakeResourceProvider : IResourceProvider
+        {
+            private readonly string? _foo;
+            private readonly int _bar;
+
+            public AllOptionalFakeResourceProvider(string? foo = null, int bar = 42)
             {
-                using Stream stream = await GetResourceStreamAsync(resource);
-                using MemoryStream memoryStream = new MemoryStream();
-                await stream.CopyToAsync(memoryStream);
-                return memoryStream.ToArray();
+                _foo = foo;
+                _bar = bar;
             }
 
-            public async Task<string> ReadAsStringAsync(Resource resource)
+            public async Task<bool> ResourceExistsAsync(Resource resource)
             {
-                using Stream stream = await GetResourceStreamAsync(resource);
-                using StreamReader reader = new StreamReader(stream);
-                return await reader.ReadToEndAsync();
+                await Task.CompletedTask;
+                return resource.Path == "alloptional.txt";
+            }
+
+            public async Task<Stream> GetResourceStreamAsync(Resource resource)
+            {
+                await Task.CompletedTask;
+                if (resource.Path == "alloptional.txt")
+                {
+                    byte[] bytes = System.Text.Encoding.UTF8.GetBytes("All optional content");
+                    return new MemoryStream(bytes);
+                }
+                throw new FileNotFoundException($"Resource '{resource.Path}' not found.");
+            }
+        }
+
+        // Resource collection using a provider that receives an Assembly parameter
+        [ResourceCollection(typeof(AssemblyAwareTestProvider))]
+        public static class AssemblyAwareResourceCollection
+        {
+            public static readonly Resource TestResource = new Resource("assemblyaware.txt");
+        }
+
+        // Provider that stores the assembly it receives in its constructor
+        private class AssemblyAwareTestProvider : IResourceProvider
+        {
+            public static Assembly? LastReceivedAssembly { get; private set; }
+
+            public AssemblyAwareTestProvider(Assembly assembly)
+            {
+                ArgumentNullException.ThrowIfNull(assembly);
+                LastReceivedAssembly = assembly;
+            }
+
+            public async Task<bool> ResourceExistsAsync(Resource resource)
+            {
+                await Task.CompletedTask;
+                return resource.Path == "assemblyaware.txt";
+            }
+
+            public async Task<Stream> GetResourceStreamAsync(Resource resource)
+            {
+                await Task.CompletedTask;
+                if (resource.Path == "assemblyaware.txt")
+                {
+                    byte[] bytes = System.Text.Encoding.UTF8.GetBytes("Assembly aware content");
+                    return new MemoryStream(bytes);
+                }
+                throw new FileNotFoundException($"Resource '{resource.Path}' not found.");
             }
         }
     }

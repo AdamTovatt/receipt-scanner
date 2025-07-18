@@ -3,8 +3,8 @@ using ReceiptScanner.Services;
 using ReceiptScanner;
 using EasyReasy;
 using EasyReasy.EnvironmentVariables;
-using ByteShelfCommon;
 using EasyReasy.ByteShelfProvider;
+using System.Reflection;
 
 namespace ReceiptScannerTests
 {
@@ -20,10 +20,11 @@ namespace ReceiptScannerTests
             public static string ByteShelfApiKey = "BYTE_SHELF_API_KEY";
         }
 
-        private static ResourceManager _resourceManager = null!;
+        private static ResourceManager _mainProjectResourceManager = null!;
+        private static ResourceManager _testProjectResourceManager = null!;
 
         [ClassInitialize]
-        public static void BeforeAll(TestContext testContext)
+        public static async Task BeforeAll(TestContext testContext)
         {
             if (!File.Exists("TestVariables.txt"))
             {
@@ -41,19 +42,22 @@ namespace ReceiptScannerTests
 
             PredefinedResourceProvider predefinedByteShelfProvider = ByteShelfResourceProvider.CreatePredefined(typeof(Resources.Models), url, apiKey, cache: fileSystemCache);
 
-            _resourceManager = ResourceManager.CreateInstance(predefinedByteShelfProvider);
+            Assembly mainProjectAssembly = Assembly.GetAssembly(typeof(Program)) ?? throw new Exception($"Could not find the assembly of {nameof(Program)}");
+            _mainProjectResourceManager = await ResourceManager.CreateInstanceAsync(mainProjectAssembly, predefinedByteShelfProvider);
+
+            _testProjectResourceManager = await ResourceManager.CreateInstanceAsync();
         }
 
         [TestMethod]
         public async Task ProcessImageAsync_WithTestReceipt_DetectsText()
         {
             // Load the test receipt image
-            byte[] imageBytes = _resourceManager.ReadAsBytesAsync(TestResources.TestFiles.TestReceipt01).Result;
+            byte[] imageBytes = await _testProjectResourceManager.ReadAsBytesAsync(TestResources.TestFiles.TestReceipt01);
             using MemoryStream imageStream = new MemoryStream(imageBytes);
 
             // Load the model
-            byte[] modelBytes = _resourceManager.ReadAsBytesAsync(Resources.Models.ReceiptModel).Result;
-            using PGNetPredictor predictor = new PGNetPredictor(modelBytes, _resourceManager);
+            byte[] modelBytes = await _mainProjectResourceManager.ReadAsBytesAsync(Resources.Models.PgNetModel);
+            using PGNetPredictor predictor = new PGNetPredictor(modelBytes, _mainProjectResourceManager);
 
             // Act
             ReceiptData result = await predictor.ProcessImageAsync(imageStream);
@@ -112,12 +116,12 @@ namespace ReceiptScannerTests
         public async Task ProcessImageAsync_WithTestReceipt_ValidatesBoundingBoxes()
         {
             // Load the test receipt image
-            byte[] imageBytes = _resourceManager.ReadAsBytesAsync(TestResources.TestFiles.TestReceipt01).Result;
+            byte[] imageBytes = await _testProjectResourceManager.ReadAsBytesAsync(TestResources.TestFiles.TestReceipt01);
             using MemoryStream imageStream = new MemoryStream(imageBytes);
 
             // Load the model
-            byte[] modelBytes = _resourceManager.ReadAsBytesAsync(Resources.Models.ReceiptModel).Result;
-            using PGNetPredictor predictor = new PGNetPredictor(modelBytes, _resourceManager);
+            byte[] modelBytes = await _mainProjectResourceManager.ReadAsBytesAsync(Resources.Models.PgNetModel);
+            using PGNetPredictor predictor = new PGNetPredictor(modelBytes, _mainProjectResourceManager);
 
             // Act
             ReceiptData result = await predictor.ProcessImageAsync(imageStream);

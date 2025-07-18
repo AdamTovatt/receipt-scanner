@@ -33,7 +33,7 @@ namespace ReceiptScanner.Services
                     return _model;
                 }
 
-                byte[] modelBytes = await _resourceManager.ReadAsBytesAsync(Resources.Models.ReceiptModel);
+                byte[] modelBytes = await _resourceManager.ReadAsBytesAsync(Resources.Models.PgNetModel);
                 _modelBytes = modelBytes;
                 _model = new InferenceSession(modelBytes);
                 return _model;

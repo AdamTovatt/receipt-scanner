@@ -35,17 +35,8 @@ namespace ReceiptScanner
                 baseUrl: EnvironmentVariables.GetVariable(EnvironmentVariable.ByteShelfUrl),
                 apiKey: EnvironmentVariables.GetVariable(EnvironmentVariable.ByteShelfApiKey));
 
-            // Create embedded resource provider for frontend and dictionary resources
-            PredefinedResourceProvider frontendProvider = new PredefinedResourceProvider(
-                resourceCollectionType: typeof(Resources.Frontend),
-                provider: new EmbeddedResourceProvider());
-
-            PredefinedResourceProvider dictionariesProvider = new PredefinedResourceProvider(
-                resourceCollectionType: typeof(Resources.Dictionaries),
-                provider: new EmbeddedResourceProvider());
-
             // Register ResourceManager as a singleton with predefined providers
-            builder.Services.AddSingleton(_ => ResourceManager.CreateInstance(modelsProvider, frontendProvider, dictionariesProvider));
+            builder.Services.AddSingleton(_ => ResourceManager.CreateInstanceAsync(modelsProvider));
 
             // Register our services
             builder.Services.AddSingleton<IModelService, ModelService>();

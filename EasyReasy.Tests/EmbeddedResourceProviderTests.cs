@@ -18,16 +18,6 @@ namespace EasyReasy.Tests
         }
 
         [TestMethod]
-        public void Constructor_WithoutAssembly_CreatesInstance()
-        {
-            // Arrange & Act
-            EmbeddedResourceProvider provider = new EmbeddedResourceProvider();
-
-            // Assert
-            Assert.IsNotNull(provider);
-        }
-
-        [TestMethod]
         public async Task ResourceExistsAsync_WithExistingResource_ReturnsTrue()
         {
             // Arrange

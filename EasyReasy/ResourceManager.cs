@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 
@@ -16,12 +17,11 @@ namespace EasyReasy
         /// <param name="predefinedProviders">The predefined resource providers to register.</param>
         /// <returns>A new <see cref="ResourceManager"/> instance.</returns>
         /// <exception cref="InvalidOperationException">Thrown when resource mapping integrity check fails during initialization, including when providers are missing for collections or when resources cannot be found by their providers.</exception>
-        public static ResourceManager CreateInstance(
-            Assembly? assembly = null,
+        public static async Task<ResourceManager> CreateInstanceAsync(
+            Assembly assembly,
             params PredefinedResourceProvider[] predefinedProviders
         )
         {
-            assembly ??= Assembly.GetExecutingAssembly();
             ResourceManager instance = new ResourceManager(assembly);
 
             // Register predefined providers before discovery
@@ -34,21 +34,53 @@ namespace EasyReasy
             }
 
             instance.DiscoverResourceCollections();
-            instance.VerifyResourceMappings();
+            await instance.VerifyResourceMappingsAsync().ConfigureAwait(false);
             return instance;
         }
 
         /// <summary>
-        /// Creates a new instance of <see cref="ResourceManager"/> for the specified assembly.
+        /// Creates a new instance of <see cref="ResourceManager"/> for the assembly that is calling this method.
         /// </summary>
         /// <param name="predefinedProviders">The predefined resource providers to register.</param>
         /// <returns>A new <see cref="ResourceManager"/> instance.</returns>
         /// <exception cref="InvalidOperationException">Thrown when resource mapping integrity check fails during initialization, including when providers are missing for collections or when resources cannot be found by their providers.</exception>
-        public static ResourceManager CreateInstance(
+        public static async Task<ResourceManager> CreateInstanceAsync(
             params PredefinedResourceProvider[] predefinedProviders
         )
         {
-            return CreateInstance(null, predefinedProviders);
+            return await CreateInstanceAsync(GetCallingAssembly() ?? throw new InvalidOperationException($"Could not find calling assembly"), predefinedProviders).ConfigureAwait(false);
+        }
+
+        // This method is honestly a bit questionable as it is quite error-prone. Maybe it would just be better to not allow creating instances of ResourceManager without providing an assembly
+        private static Assembly? GetCallingAssembly() // Will find out the real calling assembly even in an async method that is normally missing that information since it's a continuation task
+        {
+            StackTrace stackTrace = new StackTrace(skipFrames: 1, fNeedFileInfo: false);
+            foreach (StackFrame frame in stackTrace.GetFrames()!)
+            {
+                MethodBase? method = frame.GetMethod();
+                if (method == null)
+                {
+                    continue;
+                }
+
+                Type? declaringType = method.DeclaringType;
+                if (declaringType == null)
+                {
+                    continue;
+                }
+
+                Assembly assembly = declaringType.Assembly;
+
+                if (assembly != Assembly.GetExecutingAssembly() && // If the assembly we're considering isn't the one that's declaring this code (meaning the call came from outside this assembly)
+                    !assembly.FullName!.StartsWith("System") && //    and the name doesn't start with System
+                    !assembly.FullName.StartsWith("Microsoft") && //  and the name doesn't start with Microsoft
+                    !assembly.IsDynamic) //                           and the calling assembly isn't run time generated
+                {
+                    return assembly; // Then it's probably the real assembly that we want
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -90,7 +122,7 @@ namespace EasyReasy
         public async Task<string> ReadAsStringAsync(Resource resource)
         {
             IResourceProvider provider = GetProviderForResource(resource);
-            return await provider.ReadAsStringAsync(resource);
+            return await provider.ReadAsStringAsync(resource).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -103,7 +135,7 @@ namespace EasyReasy
         public async Task<byte[]> ReadAsBytesAsync(Resource resource)
         {
             IResourceProvider provider = GetProviderForResource(resource);
-            return await provider.ReadAsBytesAsync(resource);
+            return await provider.ReadAsBytesAsync(resource).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -116,7 +148,7 @@ namespace EasyReasy
         public async Task<Stream> GetResourceStreamAsync(Resource resource)
         {
             IResourceProvider provider = GetProviderForResource(resource);
-            return await provider.GetResourceStreamAsync(resource);
+            return await provider.GetResourceStreamAsync(resource).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -141,7 +173,7 @@ namespace EasyReasy
             {
                 IResourceProvider provider = GetProviderForResource(resource);
 
-                return await provider.ResourceExistsAsync(resource);
+                return await provider.ResourceExistsAsync(resource).ConfigureAwait(false);
             }
             catch (InvalidOperationException ex)
             {
@@ -156,7 +188,7 @@ namespace EasyReasy
         /// Verifies that all mapped resources exist and are accessible.
         /// </summary>
         /// <exception cref="InvalidOperationException">Thrown when resource mapping integrity check fails, including when providers are missing for collections or when resources cannot be found by their providers.</exception>
-        public void VerifyResourceMappings()
+        public async Task VerifyResourceMappingsAsync()
         {
             StringBuilder errors = new StringBuilder();
 
@@ -171,8 +203,11 @@ namespace EasyReasy
                     ResourceCollectionAttribute? attribute = collectionType.GetCustomAttribute<ResourceCollectionAttribute>();
                     if (attribute != null)
                     {
-                        ConstructorInfo? parameterlessConstructor = attribute.ProviderType.GetConstructor(Type.EmptyTypes);
-                        if (parameterlessConstructor == null)
+                        // Find a public constructor where all parameters are either optional or injectable types
+                        ConstructorInfo? suitableConstructor = attribute.ProviderType.GetConstructors()
+                            .FirstOrDefault(ctor => ctor.GetParameters().All(p => p.IsOptional || IsInjectableType(p.ParameterType)));
+
+                        if (suitableConstructor == null)
                         {
                             errors.AppendLine($"❌ No provider registered for resource collection: {collectionType.Name}");
                             errors.AppendLine($"   Provider type '{attribute.ProviderType.Name}' requires constructor parameters and must be registered manually.");
@@ -196,7 +231,7 @@ namespace EasyReasy
                 {
                     try
                     {
-                        bool exists = provider.ResourceExistsAsync(resource).Result;
+                        bool exists = await provider.ResourceExistsAsync(resource).ConfigureAwait(false);
                         if (!exists)
                         {
                             errors.AppendLine($"❌ Resource not found: {resource.Path} (Collection: {collectionType.Name})");
@@ -239,23 +274,68 @@ namespace EasyReasy
 
                     resourceCollections[type] = resources;
 
-                    // Auto-register the provider if it's a concrete type with parameterless constructor
+                    // Auto-register the provider if it's a concrete type with a suitable constructor
                     if (attribute.ProviderType.IsClass && !attribute.ProviderType.IsAbstract)
                     {
-                        ConstructorInfo? parameterlessConstructor = attribute.ProviderType.GetConstructor(Type.EmptyTypes);
-                        if (parameterlessConstructor != null)
+                        // Find a public constructor where all parameters are either optional or injectable types
+                        ConstructorInfo? suitableConstructor = attribute.ProviderType.GetConstructors()
+                            .FirstOrDefault(ctor => ctor.GetParameters().All(p => p.IsOptional || IsInjectableType(p.ParameterType)));
+                        if (suitableConstructor != null)
                         {
-                            IResourceProvider provider = (IResourceProvider)Activator.CreateInstance(attribute.ProviderType)!;
+                            // Create parameter values array, injecting values for injectable types
+                            ParameterInfo[] parameters = suitableConstructor.GetParameters();
+                            object?[] parameterValues = new object?[parameters.Length];
+
+                            for (int i = 0; i < parameters.Length; i++)
+                            {
+                                ParameterInfo parameter = parameters[i];
+                                if (IsInjectableType(parameter.ParameterType))
+                                {
+                                    parameterValues[i] = GetInjectableValue(parameter.ParameterType);
+                                }
+                                else
+                                {
+                                    parameterValues[i] = parameter.DefaultValue;
+                                }
+                            }
+
+                            IResourceProvider provider = (IResourceProvider)suitableConstructor.Invoke(parameterValues);
                             providers[type] = provider;
                         }
                         else
                         {
-                            // Provider requires constructor parameters, so it needs to be registered as a predefined provider
+                            // Provider requires non-optional constructor parameters, so it needs to be registered as a predefined provider
                             // We'll let VerifyResourceMappings handle the error reporting with a specific message
                         }
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Determines if a parameter type is injectable by the ResourceManager.
+        /// </summary>
+        /// <param name="parameterType">The parameter type to check.</param>
+        /// <returns>True if the parameter type is injectable; otherwise, false.</returns>
+        private static bool IsInjectableType(Type parameterType)
+        {
+            return parameterType == typeof(Assembly);
+        }
+
+        /// <summary>
+        /// Gets the injectable value for the specified parameter type.
+        /// </summary>
+        /// <param name="parameterType">The parameter type to get the value for.</param>
+        /// <returns>The injectable value for the parameter type.</returns>
+        /// <exception cref="NotSupportedException">Thrown when the parameter type is not supported for injection.</exception>
+        private object GetInjectableValue(Type parameterType)
+        {
+            if (parameterType == typeof(Assembly))
+            {
+                return assembly;
+            }
+
+            throw new NotSupportedException($"Parameter type '{parameterType.Name}' is not supported for automatic injection.");
         }
 
         private IResourceProvider GetProviderForResource(Resource resource)

@@ -1,5 +1,4 @@
 using Microsoft.Extensions.FileProviders;
-using System.IO;
 using System.Reflection;
 
 namespace EasyReasy
@@ -14,10 +13,10 @@ namespace EasyReasy
         /// <summary>
         /// Initializes a new instance of the <see cref="EmbeddedResourceProvider"/> class.
         /// </summary>
-        /// <param name="assembly">The assembly containing the embedded resources. If null, uses the executing assembly.</param>
-        public EmbeddedResourceProvider(Assembly? assembly = null)
+        /// <param name="assembly">The assembly containing the embedded resources.</param>
+        public EmbeddedResourceProvider(Assembly assembly)
         {
-            assembly ??= Assembly.GetExecutingAssembly();
+            ArgumentNullException.ThrowIfNull(assembly);
             fileProvider = new EmbeddedFileProvider(assembly);
         }
 
