@@ -185,6 +185,22 @@ namespace EasyReasy
         }
 
         /// <summary>
+        /// Gets all defined resources for the specified collection type.
+        /// </summary>
+        /// <param name="collectionType">The resource collection type to get resources for.</param>
+        /// <returns>A list of all defined resources in the specified collection type.</returns>
+        /// <exception cref="ArgumentException">Thrown when the specified type is not a resource collection type.</exception>
+        public List<Resource> GetResourcesForCollection(Type collectionType)
+        {
+            if (resourceCollections.TryGetValue(collectionType, out List<Resource>? resources))
+            {
+                return new List<Resource>(resources);
+            }
+
+            throw new ArgumentException($"Type '{collectionType.Name}' is not a resource collection type or has not been discovered by this ResourceManager instance.");
+        }
+
+        /// <summary>
         /// Verifies that all mapped resources exist and are accessible.
         /// </summary>
         /// <exception cref="InvalidOperationException">Thrown when resource mapping integrity check fails, including when providers are missing for collections or when resources cannot be found by their providers.</exception>
@@ -406,7 +422,7 @@ namespace EasyReasy
             }
 
             throw new InvalidOperationException(
-                $"Resource not found in any collection: {resource.Path}\n" +
+                $"Resource not found in any collection: \"{resource.Path}\"\n" +
                 "This could mean you've created a Resource object manually using the constructor instead of using a resource defined in a resource collection. " +
                 "Resources must be defined as static fields in classes marked with [ResourceCollection] attribute." +
                 $"{(resourceCollections.Count == 0 ? " It also seems like no resource collections was discovered, are you sure you've used CreateInstance with the right Assembly? Maybe try passing Assembly.GetExecutingAssembly() to it as a first parameter." : "")}");

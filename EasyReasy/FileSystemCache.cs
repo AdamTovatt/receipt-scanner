@@ -18,6 +18,12 @@ namespace EasyReasy
             Directory.CreateDirectory(storagePath);
         }
 
+        public string GetStorageDirectoryForFile(string filePath)
+        {
+            string fullPath = Path.Combine(storagePath, filePath);
+            return Path.GetDirectoryName(fullPath) ?? storagePath;
+        }
+
         public async Task<bool> ExistsAsync(string resourcePath)
         {
             await Task.CompletedTask;

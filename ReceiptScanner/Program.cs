@@ -1,7 +1,9 @@
-using ReceiptScanner.Services;
+using ReceiptScanner.Services.Ocr;
 using EasyReasy;
 using EasyReasy.ByteShelfProvider;
 using EasyReasy.EnvironmentVariables;
+using ReceiptScanner.Providers.Models;
+using ReceiptScanner.Providers.Language;
 
 namespace ReceiptScanner
 {
@@ -39,9 +41,10 @@ namespace ReceiptScanner
             ResourceManager resourceManager = await ResourceManager.CreateInstanceAsync(modelsProvider);
             builder.Services.AddSingleton(resourceManager);
 
-            // Register our services
-            builder.Services.AddSingleton<IModelService, ModelService>();
-            builder.Services.AddScoped<IReceiptScannerService, ReceiptScannerService>();
+            // Register our services following the test pattern
+            builder.Services.AddSingleton<IModelProviderService, TesseractModelProviderService>();
+            builder.Services.AddSingleton<IlanguageProvider, TesseractLanguageProvider>();
+            builder.Services.AddSingleton<IOcrService, TesseractOcrService>();
 
             WebApplication app = builder.Build();
 

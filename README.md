@@ -176,7 +176,7 @@ The model can classify images into 7 different stool types:
 
 ### Supported Image Formats
 
-The API supports all image formats that SixLabors.ImageSharp can process:
+The API supports all image formats that OpenCV can process:
 - JPEG (.jpg, .jpeg)
 - PNG (.png)
 - GIF (.gif)

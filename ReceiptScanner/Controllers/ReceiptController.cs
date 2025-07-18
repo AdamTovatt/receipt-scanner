@@ -1,5 +1,9 @@
 using ReceiptScanner.Models;
-using ReceiptScanner.Services;
+using ReceiptScanner.Services.Ocr;
+using ReceiptScanner.Preprocessing;
+using ReceiptScanner.Preprocessing.Preprocessors;
+using ReceiptScanner.Providers.Models;
+using ReceiptScanner.Providers.Language;
 using Microsoft.AspNetCore.Mvc;
 using EasyReasy;
 
@@ -9,12 +13,12 @@ namespace ReceiptScanner.Controllers
     [Route("")]
     public class ReceiptController : ControllerBase
     {
-        private readonly IReceiptScannerService _receiptService;
+        private readonly IOcrService _ocrService;
         private readonly ResourceManager _resourceManager;
 
-        public ReceiptController(IReceiptScannerService receiptService, ResourceManager resourceManager)
+        public ReceiptController(IOcrService ocrService, ResourceManager resourceManager)
         {
-            _receiptService = receiptService;
+            _ocrService = ocrService;
             _resourceManager = resourceManager;
         }
 
@@ -48,9 +52,19 @@ namespace ReceiptScanner.Controllers
         }
 
         [HttpPost("scan")]
-        public async Task<ReceiptData> ScanReceipt(IFormFile imageFile)
+        public async Task<OcrResult> ScanReceipt(IFormFile imageFile)
         {
-            return await _receiptService.ScanReceiptAsync(imageFile);
+            // Create preprocessing pipeline like in the test
+            PreprocessingPipeline preprocessingPipeline = new PreprocessingPipeline();
+            preprocessingPipeline.AddPreprocessor(new ThresholdPreprocessor());
+
+            // Convert the uploaded file to byte array
+            using MemoryStream memoryStream = new MemoryStream();
+            await imageFile.CopyToAsync(memoryStream);
+            byte[] imageBytes = memoryStream.ToArray();
+
+            // Process the image using the OCR service
+            return await _ocrService.ProcessImageAsync(imageBytes, preprocessingPipeline);
         }
     }
 } 

@@ -87,5 +87,35 @@ namespace EasyReasy.Tests
             // Act & Assert
             await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await manager.ResourceExistsAsync(testResource));
         }
+
+        [TestMethod]
+        public async Task GetResourcesForCollection_WithValidCollectionType_ReturnsAllResources()
+        {
+            // Arrange
+            ParameterizedFakeResourceProvider fakeProvider = new ParameterizedFakeResourceProvider("test", true, "shared-test.txt");
+            PredefinedResourceProvider predefinedProvider = fakeProvider.AsPredefinedFor(typeof(SharedTestResourceCollection));
+            ResourceManager manager = await ResourceManager.CreateInstanceAsync(Assembly.GetExecutingAssembly(), predefinedProvider);
+
+            // Act
+            List<Resource> resources = manager.GetResourcesForCollection(typeof(SharedTestResourceCollection));
+
+            // Assert
+            Assert.IsNotNull(resources);
+            Assert.AreEqual(1, resources.Count);
+            Assert.AreEqual("shared-test.txt", resources[0].Path);
+        }
+
+        [TestMethod]
+        public async Task GetResourcesForCollection_WithInvalidCollectionType_ThrowsArgumentException()
+        {
+            // Arrange
+            ParameterizedFakeResourceProvider fakeProvider = new ParameterizedFakeResourceProvider("test", true, "shared-test.txt");
+            PredefinedResourceProvider predefinedProvider = fakeProvider.AsPredefinedFor(typeof(SharedTestResourceCollection));
+            ResourceManager manager = await ResourceManager.CreateInstanceAsync(Assembly.GetExecutingAssembly(), predefinedProvider);
+
+            // Act & Assert
+            ArgumentException exception = Assert.ThrowsException<ArgumentException>(() => manager.GetResourcesForCollection(typeof(string)));
+            Assert.IsTrue(exception.Message.Contains("String"));
+        }
     }
 } 

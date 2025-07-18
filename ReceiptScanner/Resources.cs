@@ -14,13 +14,9 @@ namespace ReceiptScanner
         [ResourceCollection(typeof(ByteShelfResourceProvider))]
         public static class Models
         {
-            /// <summary>
-            /// The main PGNet model for text detection and recognition.
-            /// </summary>
-            public static readonly Resource PgNetModel = new Resource("PgNet/pgnet.onnx");
-
-            public static readonly Resource TesseractEnglishModel = new Resource("Tesseract/eng.traineddata");
-            public static readonly Resource TesseractSwedishModel = new Resource("Tesseract/swe.traineddata");
+            public static readonly Resource TesseractEnglishModel = new Resource("Tesseract/tessdata/eng.traineddata");
+            public static readonly Resource TesseractSwedishModel = new Resource("Tesseract/tessdata/swe.traineddata");
+            public static readonly Resource TesseractOrientationModel = new Resource("Tesseract/tessdata/osd.traineddata");
         }
 
         /// <summary>
@@ -35,16 +31,6 @@ namespace ReceiptScanner
             public static readonly Resource ReceiptScannerFrontend = new Resource("Frontend/ReceiptScannerFrontend.html");
         }
 
-        /// <summary>
-        /// Dictionary files used for text processing.
-        /// </summary>
-        [ResourceCollection(typeof(EmbeddedResourceProvider))]
-        public static class Dictionaries
-        {
-            /// <summary>
-            /// IC15 dictionary for text recognition.
-            /// </summary>
-            public static readonly Resource IC15Dict = new Resource("ic15_dict.txt");
-        }
+
     }
 }

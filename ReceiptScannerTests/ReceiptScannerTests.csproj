@@ -21,11 +21,17 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="TestFiles\CroppedVat.png" />
+    <None Remove="TestFiles\SimpleImage.png" />
     <None Remove="TestFiles\TestReceipt01.jpeg" />
+    <None Remove="TestFiles\TestReceipt01_Cropped.jpg" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="TestFiles\CroppedVat.png" />
+    <EmbeddedResource Include="TestFiles\SimpleImage.png" />
     <EmbeddedResource Include="TestFiles\TestReceipt01.jpeg" />
+    <EmbeddedResource Include="TestFiles\TestReceipt01_Cropped.jpg" />
   </ItemGroup>
 
 </Project> 
