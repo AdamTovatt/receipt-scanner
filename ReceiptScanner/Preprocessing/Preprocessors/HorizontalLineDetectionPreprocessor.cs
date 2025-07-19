@@ -21,7 +21,7 @@ namespace ReceiptScanner.Preprocessing.Preprocessors
         /// <param name="maxLineGap">The maximum gap between line segments to treat them as a single line (in pixels).</param>
         /// <param name="threshold">The accumulator threshold parameter for HoughLinesP.</param>
         /// <param name="angleTolerance">The tolerance for considering a line horizontal (in degrees).</param>
-        public HorizontalLineDetectionPreprocessor(double minLineLength = 80.0, double maxLineGap = 50.0, int threshold = 80, double angleTolerance = 3.0)
+        public HorizontalLineDetectionPreprocessor(double minLineLength = 80.0, double maxLineGap = 50.0, int threshold = 80, double angleTolerance = 5.0)
         {
             _minLineLength = minLineLength;
             _maxLineGap = maxLineGap;
@@ -58,7 +58,7 @@ namespace ReceiptScanner.Preprocessing.Preprocessors
 
             // Apply Canny edge detection with higher thresholds to reduce noise
             Mat edges = new Mat();
-            Cv2.Canny(grayImage, edges, 100, 200, 1);
+            Cv2.Canny(grayImage, edges, 100, 200);
 
             // Detect lines using HoughLinesP
             LineSegmentPoint[] lines = Cv2.HoughLinesP(edges, 1, Math.PI / 180, _threshold, _minLineLength, _maxLineGap);
@@ -86,7 +86,7 @@ namespace ReceiptScanner.Preprocessing.Preprocessors
                     if (lineLength >= image.Width * minLengthRatio)
                     {
                         // Check line continuity to filter out text
-                        if (IsLineContinuous(line, edges))
+                        if (IsLineContinuous(line, grayImage))
                         {
                             horizontalLines.Add(line);
                         }
@@ -94,20 +94,18 @@ namespace ReceiptScanner.Preprocessing.Preprocessors
                 }
             }
 
-            // Merge nearby horizontal lines that are at similar Y positions
-            List<LineSegmentPoint> mergedLines = MergeNearbyHorizontalLines(horizontalLines, image.Height);
+            // Draw bounding polygons in sampled colors for debugging
+            List<Point> allPoints = GetAllPointsFromLines(horizontalLines);
+            List<List<Point>> pointGroups = GroupPointsByYCoordinate(allPoints);
+            List<List<LineSegmentPoint>> boundingPolygons = CreateBoundingPolygonsFromGroups(pointGroups);
 
-            // Draw the actual line contours instead of straight horizontal lines
-            foreach (LineSegmentPoint line in mergedLines)
+            foreach (List<LineSegmentPoint> polygon in boundingPolygons)
             {
-                // Draw the actual line path, not a straight horizontal line
-                Cv2.Line(result, line.P1, line.P2, Scalar.Red, 2);
-            }
-
-            // Also draw the original unmerged lines in blue for comparison
-            foreach (LineSegmentPoint line in horizontalLines)
-            {
-                Cv2.Line(result, line.P1, line.P2, Scalar.Blue, 1);
+                foreach (LineSegmentPoint line in polygon)
+                {
+                    // Draw the line with per-pixel color sampling
+                    DrawLineWithSampledColors(line, image, result);
+                }
             }
 
             // Cleanup
@@ -118,78 +116,237 @@ namespace ReceiptScanner.Preprocessing.Preprocessors
         }
 
         /// <summary>
-        /// Merges nearby horizontal lines that are at similar Y positions to reduce duplicate detections.
+        /// Extracts all points from detected lines and reconstructs the longest horizontal lines.
         /// </summary>
-        /// <param name="lines">The list of horizontal lines to merge.</param>
-        /// <param name="imageHeight">The height of the image for calculating merge tolerance.</param>
-        /// <returns>A list of merged horizontal lines.</returns>
-        private List<LineSegmentPoint> MergeNearbyHorizontalLines(List<LineSegmentPoint> lines, int imageHeight)
+        /// <param name="lines">The list of detected line segments.</param>
+        /// <param name="imageHeight">The height of the image for calculating Y tolerance.</param>
+        /// <returns>A list of reconstructed horizontal lines.</returns>
+        private List<LineSegmentPoint> ReconstructLongestHorizontalLines(List<LineSegmentPoint> lines, int imageHeight)
         {
             if (lines.Count == 0)
                 return new List<LineSegmentPoint>();
 
-            // Sort lines by Y position (average of start and end Y)
-            List<LineSegmentPoint> sortedLines = lines.OrderBy(l => (l.P1.Y + l.P2.Y) / 2.0).ToList();
-
-            List<LineSegmentPoint> mergedLines = new List<LineSegmentPoint>();
-            double mergeTolerance = imageHeight * 0.01; // 1% of image height (very strict)
-
-            foreach (LineSegmentPoint currentLine in sortedLines)
+            // Extract all points from the detected lines
+            List<Point> allPoints = new List<Point>();
+            foreach (LineSegmentPoint line in lines)
             {
-                double currentY = (currentLine.P1.Y + currentLine.P2.Y) / 2.0;
-                bool merged = false;
+                allPoints.Add(line.P1);
+                allPoints.Add(line.P2);
+            }
 
-                // Check if this line can be merged with an existing line
-                for (int i = 0; i < mergedLines.Count; i++)
+            // Group points by Y position (within tolerance)
+            double yTolerance = imageHeight * 0.005; // 1% of image height
+            List<List<Point>> yGroups = new List<List<Point>>();
+
+            foreach (Point point in allPoints)
+            {
+                bool addedToGroup = false;
+
+                // Check if point belongs to an existing Y group
+                foreach (List<Point> group in yGroups)
                 {
-                    LineSegmentPoint existingLine = mergedLines[i];
-                    double existingY = (existingLine.P1.Y + existingLine.P2.Y) / 2.0;
-
-                    // If lines are at similar Y positions, merge them
-                    if (Math.Abs(currentY - existingY) <= mergeTolerance)
+                    if (group.Count > 0)
                     {
-                        // Instead of creating a straight horizontal line, 
-                        // keep the line with the better contour
-                        double existingLength = Math.Sqrt(Math.Pow(existingLine.P2.X - existingLine.P1.X, 2) +
-                                                        Math.Pow(existingLine.P2.Y - existingLine.P1.Y, 2));
-                        double currentLength = Math.Sqrt(Math.Pow(currentLine.P2.X - currentLine.P1.X, 2) +
-                                                       Math.Pow(currentLine.P2.Y - currentLine.P1.Y, 2));
-
-                        // Keep the longer line as it's more likely to be the main contour
-                        if (currentLength > existingLength)
+                        double groupAvgY = group.Average(p => p.Y);
+                        if (Math.Abs(point.Y - groupAvgY) <= yTolerance)
                         {
-                            mergedLines[i] = currentLine;
+                            group.Add(point);
+                            addedToGroup = true;
+                            break;
                         }
-                        merged = true;
-                        break;
                     }
                 }
 
-                // If not merged, add as a new line
-                if (!merged)
+                // If not added to any group, create a new group
+                if (!addedToGroup)
                 {
-                    mergedLines.Add(currentLine);
+                    yGroups.Add(new List<Point> { point });
                 }
             }
 
-            return mergedLines;
+            // For each Y group, find the longest line with original slope
+            List<LineSegmentPoint> reconstructedLines = new List<LineSegmentPoint>();
+
+            foreach (List<Point> yGroup in yGroups)
+            {
+                if (yGroup.Count < 2)
+                    continue;
+
+                // Find the original lines that contributed points to this group
+                List<LineSegmentPoint> contributingLines = new List<LineSegmentPoint>();
+                foreach (LineSegmentPoint line in lines)
+                {
+                    bool p1InGroup = yGroup.Any(p => Math.Abs(p.X - line.P1.X) <= 5 && Math.Abs(p.Y - line.P1.Y) <= 5);
+                    bool p2InGroup = yGroup.Any(p => Math.Abs(p.X - line.P2.X) <= 5 && Math.Abs(p.Y - line.P2.Y) <= 5);
+
+                    if (p1InGroup || p2InGroup)
+                    {
+                        contributingLines.Add(line);
+                    }
+                }
+
+                if (contributingLines.Count == 0)
+                    continue;
+
+                // Calculate the average slope of contributing lines
+                double avgSlope = contributingLines.Average(line =>
+                {
+                    double dx = line.P2.X - line.P1.X;
+                    double dy = line.P2.Y - line.P1.Y;
+                    return dx != 0 ? dy / dx : 0;
+                });
+
+                // Find the leftmost and rightmost points
+                Point leftmost = yGroup.OrderBy(p => p.X).First();
+                Point rightmost = yGroup.OrderBy(p => p.X).Last();
+
+                // Calculate the Y coordinates for the reconstructed line using the average slope
+                int y1 = leftmost.Y;
+                int y2 = (int)(y1 + avgSlope * (rightmost.X - leftmost.X));
+
+                // Create the longest line with original slope
+                LineSegmentPoint longestLine = new LineSegmentPoint(
+                    new Point(leftmost.X, y1),
+                    new Point(rightmost.X, y2)
+                );
+
+                reconstructedLines.Add(longestLine);
+            }
+
+            return reconstructedLines;
         }
 
         /// <summary>
-        /// Checks if a line is continuous (has few gaps) to filter out text.
-        /// Text typically has gaps between characters, while real lines are more continuous.
+        /// Extracts all start and end points from a list of line segments.
+        /// </summary>
+        /// <param name="lines">The list of line segments.</param>
+        /// <returns>A list of all unique points from the line segments.</returns>
+        private List<Point> GetAllPointsFromLines(List<LineSegmentPoint> lines)
+        {
+            List<Point> allPoints = new List<Point>();
+
+            foreach (LineSegmentPoint line in lines)
+            {
+                allPoints.Add(line.P1);
+                allPoints.Add(line.P2);
+            }
+
+            return allPoints;
+        }
+
+        /// <summary>
+        /// Groups points by Y coordinate using a fixed tolerance and improved clustering logic.
+        /// </summary>
+        /// <param name="points">The list of points to group.</param>
+        /// <returns>A list of point groups, each containing points at similar Y coordinates.</returns>
+        private List<List<Point>> GroupPointsByYCoordinate(List<Point> points)
+        {
+            if (points.Count == 0)
+                return new List<List<Point>>();
+
+            // Use a fixed tolerance of 20 pixels for grouping
+            const int yTolerance = 20;
+            
+            // Sort points by Y coordinate for more predictable grouping
+            List<Point> sortedPoints = points.OrderBy(p => p.Y).ToList();
+            List<List<Point>> groups = new List<List<Point>>();
+            
+            foreach (Point point in sortedPoints)
+            {
+                bool addedToExistingGroup = false;
+                
+                // Try to add to an existing group
+                foreach (List<Point> group in groups)
+                {
+                    if (group.Count > 0)
+                    {
+                        // Calculate the average Y coordinate of the group
+                        double groupAvgY = group.Average(p => p.Y);
+                        
+                        // Check if this point is within tolerance of the group's average Y
+                        if (Math.Abs(point.Y - groupAvgY) <= yTolerance)
+                        {
+                            group.Add(point);
+                            addedToExistingGroup = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // If not added to any existing group, create a new group
+                if (!addedToExistingGroup)
+                {
+                    groups.Add(new List<Point> { point });
+                }
+            }
+            
+            // Filter out groups that are too small (likely noise)
+            const int minGroupSize = 2;
+            return groups.Where(group => group.Count >= minGroupSize).ToList();
+        }
+
+        /// <summary>
+        /// Creates line segments that form a bounding polygon around each group of points.
+        /// </summary>
+        /// <param name="pointGroups">The list of point groups.</param>
+        /// <returns>A list of line segment groups, where each group forms a bounding polygon.</returns>
+        private List<List<LineSegmentPoint>> CreateBoundingPolygonsFromGroups(List<List<Point>> pointGroups)
+        {
+            List<List<LineSegmentPoint>> polygonGroups = new List<List<LineSegmentPoint>>();
+
+            foreach (List<Point> group in pointGroups)
+            {
+                if (group.Count < 3)
+                    continue; // Skip groups with less than 3 points
+
+                // Find the extreme points in a single pass
+                Point leftmost = group[0];
+                Point rightmost = group[0];
+                Point topmost = group[0];
+                Point bottommost = group[0];
+
+                foreach (Point point in group)
+                {
+                    if (point.X < leftmost.X) leftmost = point;
+                    if (point.X > rightmost.X) rightmost = point;
+                    if (point.Y < topmost.Y) topmost = point;
+                    if (point.Y > bottommost.Y) bottommost = point;
+                }
+
+                // Create line segments forming the bounding polygon
+                List<LineSegmentPoint> polygonLines = new List<LineSegmentPoint>();
+
+                // Always add the main bounding lines
+                polygonLines.Add(new LineSegmentPoint(leftmost, rightmost)); // Top horizontal
+
+                // Add vertical lines if we have enough spread
+                if (leftmost != rightmost)
+                {
+                    polygonLines.Add(new LineSegmentPoint(leftmost, topmost));      // Left to top
+                    polygonLines.Add(new LineSegmentPoint(leftmost, bottommost));    // Left to bottom
+                    polygonLines.Add(new LineSegmentPoint(rightmost, topmost));      // Right to top
+                    polygonLines.Add(new LineSegmentPoint(rightmost, bottommost));   // Right to bottom
+                }
+
+                polygonGroups.Add(polygonLines);
+            }
+
+            return polygonGroups;
+        }
+
+        /// <summary>
+        /// Checks if a line is likely a real horizontal line by analyzing the average darkness.
+        /// Real horizontal lines will be consistently darker, while text will be brighter due to white spaces.
         /// </summary>
         /// <param name="line">The line segment to check.</param>
-        /// <param name="cannyEdges">The Canny edge detection result (binary image).</param>
-        /// <returns>True if the line is continuous enough to be considered a real line.</returns>
-        private bool IsLineContinuous(LineSegmentPoint line, Mat cannyEdges)
+        /// <param name="grayImage">The grayscale image to analyze.</param>
+        /// <returns>True if the line is dark enough to be considered a real horizontal line.</returns>
+        private bool IsLineContinuous(LineSegmentPoint line, Mat grayImage)
         {
-            // Sample points along the line to check for edge pixels
+            // Sample points along the line to calculate average darkness
             int numSamples = 100;
-            int continuousCount = 0;
-            int totalSamples = 0;
-
-            cannyEdges.SaveImage("cannyEdges.jpg");
+            double totalDarkness = 0.0;
+            int validSamples = 0;
 
             for (int i = 0; i <= numSamples; i++)
             {
@@ -198,27 +355,165 @@ namespace ReceiptScanner.Preprocessing.Preprocessors
                 int y = (int)(line.P1.Y + t * (line.P2.Y - line.P1.Y));
 
                 // Ensure coordinates are within bounds
-                if (x >= 0 && x < cannyEdges.Width && y >= 0 && y < cannyEdges.Height)
+                if (x >= 0 && x < grayImage.Width && y >= 0 && y < grayImage.Height)
                 {
-                    totalSamples++;
+                    validSamples++;
 
-                    // Check if there's an edge pixel at this position
-                    byte pixelValue = cannyEdges.Get<byte>(y, x);
-                    if (pixelValue > 0)
-                    {
-                        continuousCount++;
-                    }
+                    // Get the pixel value at this point (0 = black, 255 = white)
+                    byte pixelValue = grayImage.Get<byte>(y, x);
+                    totalDarkness += pixelValue; // Higher value = brighter (less dark)
                 }
             }
 
-            // Calculate continuity ratio
-            if (totalSamples == 0)
+            // Calculate average brightness
+            if (validSamples == 0)
                 return false;
 
-            double continuityRatio = (double)continuousCount / totalSamples;
+            double averageBrightness = totalDarkness / validSamples;
 
-            // More lenient threshold: 35% continuity - allows more gaps but still filters out text
-            return continuityRatio >= 0.35;
+            // Real horizontal lines should be darker (lower brightness values)
+            // Text will be brighter due to white spaces between characters
+            // Threshold: average brightness should be less than 150 (darker than 150/255)
+            return averageBrightness < 150;
+        }
+
+
+
+        /// <summary>
+        /// Draws a line with per-pixel color sampling.
+        /// </summary>
+        /// <param name="line">The line segment to draw.</param>
+        /// <param name="image">The image to sample colors from.</param>
+        /// <param name="result">The Mat to draw on.</param>
+        private void DrawLineWithSampledColors(LineSegmentPoint line, Mat image, Mat result)
+        {
+            int numSamples = (int)Math.Sqrt(Math.Pow(line.P2.X - line.P1.X, 2) + Math.Pow(line.P2.Y - line.P1.Y, 2));
+            if (numSamples == 0) return; // Avoid division by zero
+
+            const int offsetDistance = 6; // Distance above/below line to sample
+            const int lineThickness = 4; // Thickness of the erasing line
+
+            // First, sample the entire line globally (20 samples)
+            Scalar globalLineColor = SampleGlobalLineColor(line, image, offsetDistance);
+
+            for (int i = 0; i <= numSamples; i++)
+            {
+                double t = (double)i / numSamples;
+                int x = (int)(line.P1.X + t * (line.P2.X - line.P1.X));
+                int y = (int)(line.P1.Y + t * (line.P2.Y - line.P1.Y));
+
+                // Ensure coordinates are within bounds
+                if (x >= 0 && x < image.Width && y >= 0 && y < image.Height)
+                {
+                    // Sample colors from above and below this specific pixel
+                    List<Vec3b> samples = new List<Vec3b>();
+
+                    // Sample above the line
+                    int yAbove = y - offsetDistance;
+                    if (yAbove >= 0)
+                    {
+                        samples.Add(image.Get<Vec3b>(yAbove, x));
+                    }
+
+                    // Sample below the line
+                    int yBelow = y + offsetDistance;
+                    if (yBelow < image.Height)
+                    {
+                        samples.Add(image.Get<Vec3b>(yBelow, x));
+                    }
+
+                    // Calculate average color from local samples
+                    if (samples.Count > 0)
+                    {
+                        double localAvgB = samples.Average(s => s[0]);
+                        double localAvgG = samples.Average(s => s[1]);
+                        double localAvgR = samples.Average(s => s[2]);
+                        
+                        // Combine global and local colors (50/50 blend)
+                        double combinedB = (localAvgB + globalLineColor.Val0) * 0.5;
+                        double combinedG = (localAvgG + globalLineColor.Val1) * 0.5;
+                        double combinedR = (localAvgR + globalLineColor.Val2) * 0.5;
+                        
+                        Scalar sampledColor = new Scalar(combinedB, combinedG, combinedR);
+                        
+                        // Draw a thicker line by drawing multiple pixels around the point
+                        for (int dy = -lineThickness; dy <= lineThickness; dy++)
+                        {
+                            for (int dx = -lineThickness; dx <= lineThickness; dx++)
+                            {
+                                int drawX = x + dx;
+                                int drawY = y + dy;
+                                
+                                // Ensure the pixel to draw is within bounds
+                                if (drawX >= 0 && drawX < image.Width && drawY >= 0 && drawY < image.Height)
+                                {
+                                    Cv2.Circle(result, new Point(drawX, drawY), 0, sampledColor, -1);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Samples the entire line globally to get an average background color.
+        /// </summary>
+        /// <param name="line">The line segment to sample.</param>
+        /// <param name="image">The image to sample from.</param>
+        /// <param name="offsetDistance">Distance above/below line to sample.</param>
+        /// <returns>A Scalar representing the global average background color.</returns>
+        private Scalar SampleGlobalLineColor(LineSegmentPoint line, Mat image, int offsetDistance)
+        {
+            const int globalSamples = 20;
+            double totalB = 0.0, totalG = 0.0, totalR = 0.0;
+            int validSamples = 0;
+
+            for (int i = 0; i <= globalSamples; i++)
+            {
+                double t = (double)i / globalSamples;
+                int x = (int)(line.P1.X + t * (line.P2.X - line.P1.X));
+                int y = (int)(line.P1.Y + t * (line.P2.Y - line.P1.Y));
+
+                // Sample colors from above and below this point
+                List<Vec3b> samples = new List<Vec3b>();
+
+                // Sample above the line
+                int yAbove = y - offsetDistance;
+                if (yAbove >= 0 && x >= 0 && x < image.Width)
+                {
+                    samples.Add(image.Get<Vec3b>(yAbove, x));
+                }
+
+                // Sample below the line
+                int yBelow = y + offsetDistance;
+                if (yBelow < image.Height && x >= 0 && x < image.Width)
+                {
+                    samples.Add(image.Get<Vec3b>(yBelow, x));
+                }
+
+                // Average the samples from above and below
+                if (samples.Count > 0)
+                {
+                    validSamples++;
+                    double avgB = samples.Average(s => s[0]);
+                    double avgG = samples.Average(s => s[1]);
+                    double avgR = samples.Average(s => s[2]);
+                    
+                    totalB += avgB;
+                    totalG += avgG;
+                    totalR += avgR;
+                }
+            }
+
+            if (validSamples == 0)
+                return new Scalar(255, 255, 255); // Fallback to white
+
+            double finalAvgB = totalB / validSamples;
+            double finalAvgG = totalG / validSamples;
+            double finalAvgR = totalR / validSamples;
+
+            return new Scalar(finalAvgB, finalAvgG, finalAvgR);
         }
     }
 }

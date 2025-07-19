@@ -59,10 +59,12 @@ namespace ReceiptScanner.Tests.Tests
             ICornerDetectionService cornerDetectionService = new HeatmapCornerDetectionService(_mainProjectResourceManager);
             CornerDetectionCropPreprocessor cornerDetectionCropPreprocessor = new CornerDetectionCropPreprocessor(cornerDetectionService, 0.5);
             ThresholdPreprocessor thresholdPreprocessor = new ThresholdPreprocessor();
+            HorizontalLineDetectionPreprocessor horizontalLineDetectionPreprocessor = new HorizontalLineDetectionPreprocessor();
 
             _preprocessingPipeline = new PreprocessingPipeline();
             _preprocessingPipeline.AddPreprocessor(cornerDetectionCropPreprocessor);
             _preprocessingPipeline.AddPreprocessor(thresholdPreprocessor);
+            _preprocessingPipeline.AddPreprocessor(horizontalLineDetectionPreprocessor);
         }
 
         private static void InitializeOcrService()

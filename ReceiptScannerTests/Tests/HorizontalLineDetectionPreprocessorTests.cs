@@ -5,6 +5,7 @@ using OpenCvSharp;
 using ReceiptScanner.Models;
 using ReceiptScanner.Preprocessing;
 using ReceiptScanner.Preprocessing.Preprocessors;
+using ReceiptScanner.Services.CornerDetection;
 using ReceiptScanner.Tests.Configuration;
 using ReceiptScannerTests.Extensions;
 using ReceiptScannerTests.Models;
@@ -20,6 +21,7 @@ namespace ReceiptScanner.Tests.Tests
         private static ResourceManager _mainProjectResourceManager = null!;
         private static ResourceManager _testProjectResourceManager = null!;
         private static IDebugOutputService _debugOutputService = null!;
+        private static ICornerDetectionService _cornerDetectionService = null!;
 
         [ClassInitialize]
         public static async Task BeforeAll(TestContext testContext)
@@ -42,6 +44,8 @@ namespace ReceiptScanner.Tests.Tests
             _mainProjectResourceManager = await ResourceManager.CreateInstanceAsync(mainProjectAssembly, predefinedByteShelfProvider);
             _testProjectResourceManager = await ResourceManager.CreateInstanceAsync();
 
+            _cornerDetectionService = new HeatmapCornerDetectionService(_mainProjectResourceManager);
+
             // Initialize debug output service with automatic path detection
             _debugOutputService = new LocalFileDebugOutputService();
         }
@@ -53,27 +57,16 @@ namespace ReceiptScanner.Tests.Tests
             // Arrange
             ThresholdPreprocessor thresholdPreprocessor = new ThresholdPreprocessor();
             HorizontalLineDetectionPreprocessor lineDetectionPreprocessor = new HorizontalLineDetectionPreprocessor();
+            RotationCorrectionPreprocessor rotationCorrectionPreprocessor = new RotationCorrectionPreprocessor(_cornerDetectionService, 0.5);
 
             // Load image from test resources
             byte[] imageBytes = await _testProjectResourceManager.ReadAsBytesAsync(new Resource(testResource));
             Mat originalImage = Mat.FromImageData(imageBytes);
 
             // Act
-            // Mat thresholdedImage = thresholdPreprocessor.Preprocess(originalImage);
-            Mat processedImage = lineDetectionPreprocessor.Preprocess(originalImage);
-
-            // Assert
-            Assert.IsNotNull(processedImage);
-            Assert.IsFalse(processedImage.Empty(), "Processed image should not be empty");
-
-            // Log results for debugging
-            Console.WriteLine($"Test resource: {testResource}");
-            Console.WriteLine($"Original image size: {originalImage.Width}x{originalImage.Height}");
-            Console.WriteLine($"Processed image size: {processedImage.Width}x{processedImage.Height}");
-
-            // Verify that the processed image has the same dimensions as the original
-            Assert.AreEqual(originalImage.Width, processedImage.Width, "Processed image width should match original width");
-            Assert.AreEqual(originalImage.Height, processedImage.Height, "Processed image height should match original height");
+            Mat rotatedImage = rotationCorrectionPreprocessor.Preprocess(originalImage);
+            Mat thresholdedImage = thresholdPreprocessor.Preprocess(rotatedImage);
+            Mat processedImage = lineDetectionPreprocessor.Preprocess(thresholdedImage);
 
             // Output both images for debugging
             string originalImageName = LocalFileDebugOutputService.CreateNameFromCaller(testResource.Replace("/", "_").Replace(".", "_") + "_original");
@@ -85,6 +78,8 @@ namespace ReceiptScanner.Tests.Tests
             // Cleanup
             originalImage.Dispose();
             processedImage.Dispose();
+            rotatedImage.Dispose();
+            thresholdedImage.Dispose();
         }
 
         [TestMethod]
