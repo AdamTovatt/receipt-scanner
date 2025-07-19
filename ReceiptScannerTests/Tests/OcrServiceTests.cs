@@ -11,9 +11,9 @@ using ReceiptScanner.Services.Ocr;
 using ReceiptScanner.Providers.Language;
 using ReceiptScanner.Providers.Models;
 using OpenCvSharp;
-using ReceiptScannerTests.Configuration;
+using ReceiptScanner.Tests.Configuration;
 
-namespace ReceiptScannerTests.Tests
+namespace ReceiptScanner.Tests.Tests
 {
     [TestClass]
     public class OcrServiceTests

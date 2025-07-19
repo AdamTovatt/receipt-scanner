@@ -2,7 +2,7 @@ using ReceiptScanner.Preprocessing.Preprocessors.EdgeDetection;
 using ReceiptScanner.Preprocessing;
 using OpenCvSharp;
 
-namespace ReceiptScannerTests.Tests
+namespace ReceiptScanner.Tests.Tests
 {
     [TestClass]
     public class EdgeDetectionComponentTests

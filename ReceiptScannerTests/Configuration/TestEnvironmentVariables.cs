@@ -1,6 +1,6 @@
 using EasyReasy.EnvironmentVariables;
 
-namespace ReceiptScannerTests.Configuration
+namespace ReceiptScanner.Tests.Configuration
 {
     [EnvironmentVariableNameContainer]
     public static class TestEnvironmentVariables

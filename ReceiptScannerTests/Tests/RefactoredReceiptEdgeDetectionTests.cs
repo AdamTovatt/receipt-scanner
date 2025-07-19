@@ -4,7 +4,7 @@ using ReceiptScanner.Preprocessing;
 using EasyReasy;
 using OpenCvSharp;
 
-namespace ReceiptScannerTests.Tests
+namespace ReceiptScanner.Tests.Tests
 {
     [TestClass]
     public class RefactoredReceiptEdgeDetectionTests

@@ -1,6 +1,6 @@
 using EasyReasy;
 
-namespace ReceiptScannerTests.Configuration
+namespace ReceiptScanner.Tests.Configuration
 {
     public static class TestResources
     {

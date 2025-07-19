@@ -3,9 +3,9 @@ using EasyReasy.EnvironmentVariables;
 using EasyReasy.ByteShelfProvider;
 using System.Reflection;
 using ReceiptScanner;
-using ReceiptScannerTests.Configuration;
+using ReceiptScanner.Tests.Configuration;
 
-namespace ReceiptScannerTests.Tests
+namespace ReceiptScanner.Tests.Tests
 {
     [TestClass]
     public class ResourceTests
