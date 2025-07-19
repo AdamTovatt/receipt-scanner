@@ -22,6 +22,8 @@ namespace EasyReasy
             params PredefinedResourceProvider[] predefinedProviders
         )
         {
+            ArgumentNullException.ThrowIfNull(assembly, nameof(assembly));
+
             ResourceManager instance = new ResourceManager(assembly);
 
             // Register predefined providers before discovery

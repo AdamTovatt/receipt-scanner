@@ -3,16 +3,28 @@ using ReceiptScanner.Models;
 
 namespace ReceiptScanner.Services.CornerDetection
 {
+    /// <summary>
+    /// Service for postprocessing heatmap-based corner detection results.
+    /// </summary>
     public class HeatmapCornerDetectionPostprocessor
     {
         private readonly ContourProcessingService _contourProcessor;
         private const double HeatmapThreshold = 0.3;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="HeatmapCornerDetectionPostprocessor"/> class.
+        /// </summary>
         public HeatmapCornerDetectionPostprocessor()
         {
             _contourProcessor = new ContourProcessingService();
         }
 
+        /// <summary>
+        /// Postprocesses heatmap inference results to extract corner coordinates.
+        /// </summary>
+        /// <param name="inferenceResult">The heatmap inference result from the model.</param>
+        /// <param name="preprocessingResult">The preprocessing result containing metadata.</param>
+        /// <returns>The corner detection result with four corner coordinates and confidence score.</returns>
         public CornerDetectionResult PostprocessHeatmaps(
             HeatmapInferenceResult inferenceResult,
             PreprocessingResult preprocessingResult)
