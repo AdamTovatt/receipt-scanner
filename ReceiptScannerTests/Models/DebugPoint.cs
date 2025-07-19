@@ -19,4 +19,4 @@ namespace ReceiptScannerTests.Models
         {
         }
     }
-} 
+}

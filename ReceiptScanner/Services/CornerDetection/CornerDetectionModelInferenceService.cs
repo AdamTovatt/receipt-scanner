@@ -37,11 +37,11 @@ namespace ReceiptScanner.Services.CornerDetection
             inputMat.GetArray(out inputData);
 
             // Create input tensor with correct dimensions (1, 3, 256, 256)
-            var dimensions = new int[] { 1, 3, 256, 256 };
-            var onnxInputTensor = new DenseTensor<float>(inputData, dimensions);
+            int[] dimensions = new int[] { 1, 3, 256, 256 };
+            DenseTensor<float> onnxInputTensor = new DenseTensor<float>(inputData, dimensions);
 
             // Create input container
-            var inputs = new List<NamedOnnxValue>
+            List<NamedOnnxValue> inputs = new List<NamedOnnxValue>
             {
                 NamedOnnxValue.CreateFromTensor(_inputName, onnxInputTensor)
             };
@@ -50,9 +50,9 @@ namespace ReceiptScanner.Services.CornerDetection
             using IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results = _session.Run(inputs);
 
             // Extract heatmap outputs
-            var heatmapOutput = results.First();
-            var heatmapData = heatmapOutput.AsEnumerable<float>().ToArray();
-            var heatmapShape = heatmapOutput.AsTensor<float>().Dimensions.ToArray();
+            DisposableNamedOnnxValue heatmapOutput = results.First();
+            float[] heatmapData = heatmapOutput.AsEnumerable<float>().ToArray();
+            int[] heatmapShape = heatmapOutput.AsTensor<float>().Dimensions.ToArray();
 
             return new HeatmapInferenceResult
             {
@@ -73,11 +73,11 @@ namespace ReceiptScanner.Services.CornerDetection
             inputMat.GetArray(out inputData);
 
             // Create input tensor with correct dimensions (1, 3, 256, 256)
-            var dimensions = new int[] { 1, 3, 256, 256 };
-            var onnxInputTensor = new DenseTensor<float>(inputData, dimensions);
+            int[] dimensions = new int[] { 1, 3, 256, 256 };
+            DenseTensor<float> onnxInputTensor = new DenseTensor<float>(inputData, dimensions);
 
             // Create input container
-            var inputs = new List<NamedOnnxValue>
+            List<NamedOnnxValue> inputs = new List<NamedOnnxValue>
             {
                 NamedOnnxValue.CreateFromTensor(_inputName, onnxInputTensor)
             };
@@ -86,11 +86,11 @@ namespace ReceiptScanner.Services.CornerDetection
             using IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results = _session.Run(inputs);
 
             // Extract outputs
-            var pointsOutput = results.First(r => r.Name.Contains("points"));
-            var hasObjOutput = results.First(r => r.Name.Contains("has_obj"));
+            DisposableNamedOnnxValue pointsOutput = results.First(r => r.Name.Contains("points"));
+            DisposableNamedOnnxValue hasObjOutput = results.First(r => r.Name.Contains("has_obj"));
 
-            var pointsData = pointsOutput.AsEnumerable<float>().ToArray();
-            var hasObjData = hasObjOutput.AsEnumerable<float>().ToArray();
+            float[] pointsData = pointsOutput.AsEnumerable<float>().ToArray();
+            float[] hasObjData = hasObjOutput.AsEnumerable<float>().ToArray();
 
             return new PointInferenceResult
             {
@@ -117,7 +117,7 @@ namespace ReceiptScanner.Services.CornerDetection
         /// Gets or sets the heatmap data as a flattened array.
         /// </summary>
         public float[] Heatmaps { get; set; } = Array.Empty<float>();
-        
+
         /// <summary>
         /// Gets or sets the shape of the heatmap tensor.
         /// </summary>
@@ -133,7 +133,7 @@ namespace ReceiptScanner.Services.CornerDetection
         /// Gets or sets the corner point coordinates as a flattened array.
         /// </summary>
         public float[] Points { get; set; } = Array.Empty<float>();
-        
+
         /// <summary>
         /// Gets or sets the confidence score indicating if an object was detected.
         /// </summary>

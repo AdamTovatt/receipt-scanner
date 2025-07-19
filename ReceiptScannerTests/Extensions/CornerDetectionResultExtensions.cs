@@ -8,7 +8,7 @@ namespace ReceiptScannerTests.Extensions
     {
         public static List<DebugPoint> CreateCornerDebugPoints(this CornerDetectionResult result)
         {
-            var debugPoints = new List<DebugPoint>();
+            List<DebugPoint> debugPoints = new List<DebugPoint>();
 
             // Define colors for each corner
             Scalar[] colors = new Scalar[]
@@ -41,4 +41,4 @@ namespace ReceiptScannerTests.Extensions
             return debugPoints;
         }
     }
-} 
+}

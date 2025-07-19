@@ -23,7 +23,7 @@ namespace ReceiptScanner.Services.CornerDetection
             _resourceManager = resourceManager;
             _preprocessingService = new CornerDetectionPreprocessingService();
             _inferenceService = new CornerDetectionModelInferenceService(
-                resourceManager, 
+                resourceManager,
                 Resources.CornerDetection.FastVitSa24HEBifpn256Fp32);
             _postprocessor = new HeatmapCornerDetectionPostprocessor();
         }
@@ -38,7 +38,7 @@ namespace ReceiptScanner.Services.CornerDetection
             try
             {
                 Console.WriteLine($"Starting corner detection for image: {image.Width}x{image.Height}");
-                
+
                 // Step 1: Preprocess the image
                 Console.WriteLine("Step 1: Preprocessing image...");
                 PreprocessingResult preprocessingResult = _preprocessingService.PreprocessImage(image);
@@ -63,7 +63,7 @@ namespace ReceiptScanner.Services.CornerDetection
             {
                 Console.WriteLine($"Corner detection failed with exception: {ex.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                
+
                 // Return a result indicating failure
                 return new CornerDetectionResult
                 {

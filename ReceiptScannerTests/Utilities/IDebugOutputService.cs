@@ -6,4 +6,4 @@ namespace ReceiptScannerTests.Utilities
     {
         void OutputImageWithPoints(OpenCvSharp.Mat image, List<DebugPoint> points, string imageName);
     }
-} 
+}
