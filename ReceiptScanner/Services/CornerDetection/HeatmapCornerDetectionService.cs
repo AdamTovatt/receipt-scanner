@@ -37,22 +37,14 @@ namespace ReceiptScanner.Services.CornerDetection
         {
             try
             {
-                Console.WriteLine($"Starting corner detection for image: {image.Width}x{image.Height}");
-
                 // Step 1: Preprocess the image
-                Console.WriteLine("Step 1: Preprocessing image...");
                 PreprocessingResult preprocessingResult = _preprocessingService.PreprocessImage(image);
-                Console.WriteLine($"Preprocessing complete. Tensor shape: {preprocessingResult.InputTensor.Width}x{preprocessingResult.InputTensor.Height}");
 
                 // Step 2: Run ONNX inference
-                Console.WriteLine("Step 2: Running ONNX inference...");
                 HeatmapInferenceResult inferenceResult = _inferenceService.RunHeatmapInference(preprocessingResult.InputTensor);
-                Console.WriteLine($"Inference complete. Heatmap shape: [{string.Join(", ", inferenceResult.HeatmapShape)}]");
 
                 // Step 3: Postprocess the heatmaps
-                Console.WriteLine("Step 3: Postprocessing heatmaps...");
                 CornerDetectionResult result = _postprocessor.PostprocessHeatmaps(inferenceResult, preprocessingResult);
-                Console.WriteLine($"Postprocessing complete. Confidence: {result.Confidence}");
 
                 // Cleanup
                 preprocessingResult.InputTensor.Dispose();
@@ -61,9 +53,6 @@ namespace ReceiptScanner.Services.CornerDetection
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Corner detection failed with exception: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
-
                 // Return a result indicating failure
                 return new CornerDetectionResult
                 {

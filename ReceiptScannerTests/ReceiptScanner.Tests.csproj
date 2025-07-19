@@ -26,6 +26,9 @@
     <None Remove="TestFiles\TestReceipt01.jpeg" />
     <None Remove="TestFiles\TestReceipt01_Cropped.jpg" />
     <None Remove="TestFiles\TestReceipt02.jpeg" />
+    <None Remove="TestFiles\TestReceipt02Cropped.jpeg" />
+    <None Remove="TestFiles\TestReceipt02Cropped2.jpeg" />
+    <None Remove="TestFiles\TestReceipt02LineRemoval.jpeg" />
     <None Remove="TestFiles\TestReceipt03.jpeg" />
   </ItemGroup>
 
@@ -35,6 +38,9 @@
     <EmbeddedResource Include="TestFiles\TestReceipt01.jpeg" />
     <EmbeddedResource Include="TestFiles\TestReceipt01_Cropped.jpg" />
     <EmbeddedResource Include="TestFiles\TestReceipt02.jpeg" />
+    <EmbeddedResource Include="TestFiles\TestReceipt02Cropped.jpeg" />
+    <EmbeddedResource Include="TestFiles\TestReceipt02Cropped2.jpeg" />
+    <EmbeddedResource Include="TestFiles\TestReceipt02LineRemoval.jpeg" />
     <EmbeddedResource Include="TestFiles\TestReceipt03.jpeg" />
   </ItemGroup>
 
