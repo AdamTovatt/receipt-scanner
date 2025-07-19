@@ -31,4 +31,4 @@ namespace ReceiptScanner.Preprocessing.Preprocessors
             return binary;
         }
     }
-} 
+}

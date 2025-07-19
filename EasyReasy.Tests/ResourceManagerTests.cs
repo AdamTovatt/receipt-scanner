@@ -9,7 +9,7 @@ namespace EasyReasy.Tests
         // - ResourceManagerAutoRegistrationTests.cs
         // - ResourceManagerValidationTests.cs
         // - ResourceManagerProviderTests.cs
-        
+
         // Any remaining tests that don't fit the above categories can be added here.
     }
 }

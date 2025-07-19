@@ -6,4 +6,4 @@ namespace ReceiptScanner.Preprocessing.Preprocessors.EdgeDetection
     {
         Mat TransformPerspective(Mat image, Point[] corners);
     }
-} 
+}

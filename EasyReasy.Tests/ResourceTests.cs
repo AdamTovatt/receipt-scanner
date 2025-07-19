@@ -98,4 +98,4 @@ namespace EasyReasy.Tests
             Assert.AreEqual(expectedContentType, actualContentType);
         }
     }
-} 
+}

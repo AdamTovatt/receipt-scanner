@@ -1,6 +1,6 @@
-using System.Reflection;
 using EasyReasy.Tests.TestProviders;
 using EasyReasy.Tests.TestResourceCollections;
+using System.Reflection;
 
 namespace EasyReasy.Tests
 {
@@ -118,4 +118,4 @@ namespace EasyReasy.Tests
             Assert.IsTrue(exception.Message.Contains("String"));
         }
     }
-} 
+}

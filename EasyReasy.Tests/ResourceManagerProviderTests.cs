@@ -1,6 +1,6 @@
-using System.Reflection;
 using EasyReasy.Tests.TestProviders;
 using EasyReasy.Tests.TestResourceCollections;
+using System.Reflection;
 
 namespace EasyReasy.Tests
 {
@@ -53,7 +53,7 @@ namespace EasyReasy.Tests
             // Act & Assert
             InvalidOperationException exception = Assert.ThrowsException<InvalidOperationException>(
                 () => manager.GetProviderForResource(manualResource));
-            
+
             Assert.IsTrue(exception.Message.Contains("Resource not found in any collection"));
             Assert.IsTrue(exception.Message.Contains("manual.txt"));
         }
@@ -71,7 +71,7 @@ namespace EasyReasy.Tests
             // Act & Assert
             InvalidOperationException exception = Assert.ThrowsException<InvalidOperationException>(
                 () => manager.GetProviderForResource(testResource));
-            
+
             Assert.IsTrue(exception.Message.Contains("Resource not found in any collection"));
             Assert.IsTrue(exception.Message.Contains("nonexistent.txt"));
         }
@@ -83,4 +83,4 @@ namespace EasyReasy.Tests
             public static readonly Resource TestResource = new Resource("provider-auto.txt");
         }
     }
-} 
+}

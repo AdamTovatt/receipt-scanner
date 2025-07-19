@@ -1,9 +1,9 @@
+using OpenCvSharp;
 using ReceiptScanner.Models;
-using Tesseract;
 using ReceiptScanner.Preprocessing;
 using ReceiptScanner.Providers.Language;
 using ReceiptScanner.Providers.Models;
-using OpenCvSharp;
+using Tesseract;
 
 namespace ReceiptScanner.Services.Ocr
 {

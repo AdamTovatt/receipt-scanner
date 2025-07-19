@@ -32,4 +32,4 @@ namespace EasyReasy.Tests.TestProviders
             throw new FileNotFoundException($"Resource '{resource.Path}' not found.");
         }
     }
-} 
+}

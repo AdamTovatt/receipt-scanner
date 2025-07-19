@@ -1,6 +1,6 @@
-using System.Reflection;
 using EasyReasy.Tests.TestProviders;
 using EasyReasy.Tests.TestResourceCollections;
+using System.Reflection;
 
 namespace EasyReasy.Tests
 {
@@ -43,7 +43,7 @@ namespace EasyReasy.Tests
             // Act & Assert
             InvalidOperationException exception = Assert.ThrowsException<InvalidOperationException>(
                 () => ValidateResourcePathUniqueness(resourcePathToCollections));
-            
+
             Assert.IsTrue(exception.Message.Contains("Resource path conflicts detected"));
             Assert.IsTrue(exception.Message.Contains("duplicate.txt"));
             Assert.IsTrue(exception.Message.Contains("DuplicatePathCollection1"));
@@ -68,14 +68,14 @@ namespace EasyReasy.Tests
         private static void ValidateResourcePathUniqueness(Dictionary<string, List<Type>> resourcePathToCollections)
         {
             Type resourceManagerType = typeof(ResourceManager);
-            MethodInfo? validateMethod = resourceManagerType.GetMethod("ValidateResourcePathUniqueness", 
+            MethodInfo? validateMethod = resourceManagerType.GetMethod("ValidateResourcePathUniqueness",
                 BindingFlags.NonPublic | BindingFlags.Static);
-            
+
             if (validateMethod == null)
             {
                 throw new InvalidOperationException("ValidateResourcePathUniqueness method not found");
             }
-            
+
             try
             {
                 validateMethod.Invoke(null, new object[] { resourcePathToCollections });
@@ -101,4 +101,4 @@ namespace EasyReasy.Tests
             public static readonly Resource TestResource = new Resource("validation-auto.txt");
         }
     }
-} 
+}

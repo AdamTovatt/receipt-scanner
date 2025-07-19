@@ -1,5 +1,3 @@
-using ReceiptScanner.Preprocessing.Preprocessors;
-
 namespace ReceiptScanner.Preprocessing.Preprocessors.EdgeDetection
 {
     public static class ReceiptEdgeDetectionFactory
@@ -49,4 +47,4 @@ namespace ReceiptScanner.Preprocessing.Preprocessors.EdgeDetection
                 perspectiveTransformer);
         }
     }
-} 
+}

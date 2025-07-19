@@ -1,6 +1,3 @@
-using EasyReasy;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
 namespace EasyReasy.Tests
 {
     [TestClass]
@@ -286,4 +283,4 @@ namespace EasyReasy.Tests
             }
         }
     }
-} 
+}

@@ -1,9 +1,9 @@
+using EasyReasy;
+using OpenCvSharp;
 using ReceiptScanner.Preprocessing.Preprocessors;
 using ReceiptScanner.Preprocessing.Preprocessors.EdgeDetection;
-using EasyReasy;
-using System.Reflection;
-using OpenCvSharp;
 using ReceiptScanner.Tests.Configuration;
+using System.Reflection;
 
 namespace ReceiptScanner.Tests.Tests
 {

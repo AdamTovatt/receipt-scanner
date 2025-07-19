@@ -286,7 +286,7 @@ namespace EasyReasy
                             if (value is Resource resource)
                             {
                                 resources.Add(resource);
-                                
+
                                 // Track which collections contain each resource path
                                 if (!resourcePathToCollections.ContainsKey(resource.Path))
                                 {

@@ -1,5 +1,4 @@
 using EasyReasy.ByteShelfProvider;
-using EasyReasy;
 
 namespace EasyReasy.Tests
 {
@@ -278,4 +277,4 @@ namespace EasyReasy.Tests
             public static readonly Resource TestResource = new Resource("test.txt");
         }
     }
-} 
+}

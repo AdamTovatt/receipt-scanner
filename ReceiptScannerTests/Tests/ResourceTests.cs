@@ -1,9 +1,8 @@
 using EasyReasy;
-using EasyReasy.EnvironmentVariables;
 using EasyReasy.ByteShelfProvider;
-using System.Reflection;
-using ReceiptScanner;
+using EasyReasy.EnvironmentVariables;
 using ReceiptScanner.Tests.Configuration;
+using System.Reflection;
 
 namespace ReceiptScanner.Tests.Tests
 {

@@ -6,4 +6,4 @@ namespace ReceiptScanner.Preprocessing.Preprocessors.EdgeDetection
     {
         Point[] SortCorners(Point[] corners);
     }
-} 
+}

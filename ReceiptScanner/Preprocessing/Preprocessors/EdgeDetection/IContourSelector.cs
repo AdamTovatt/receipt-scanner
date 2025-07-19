@@ -6,4 +6,4 @@ namespace ReceiptScanner.Preprocessing.Preprocessors.EdgeDetection
     {
         Point[]? SelectBestContour(Point[][] contours, int imageWidth, int imageHeight);
     }
-} 
+}

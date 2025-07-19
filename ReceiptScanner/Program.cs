@@ -1,9 +1,9 @@
-using ReceiptScanner.Services.Ocr;
 using EasyReasy;
 using EasyReasy.ByteShelfProvider;
 using EasyReasy.EnvironmentVariables;
-using ReceiptScanner.Providers.Models;
 using ReceiptScanner.Providers.Language;
+using ReceiptScanner.Providers.Models;
+using ReceiptScanner.Services.Ocr;
 
 namespace ReceiptScanner
 {

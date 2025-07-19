@@ -32,4 +32,4 @@ namespace ReceiptScanner.Preprocessing.Preprocessors.EdgeDetection
             return blurred;
         }
     }
-} 
+}

@@ -61,4 +61,4 @@ namespace EasyReasy
             await StoreAsync(resourcePath, bytes);
         }
     }
-} 
+}

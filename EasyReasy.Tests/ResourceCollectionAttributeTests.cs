@@ -1,5 +1,3 @@
-using EasyReasy;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Reflection;
 
 namespace EasyReasy.Tests
@@ -238,4 +236,4 @@ namespace EasyReasy.Tests
             }
         }
     }
-} 
+}

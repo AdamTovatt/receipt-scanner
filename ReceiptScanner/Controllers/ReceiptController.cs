@@ -1,11 +1,9 @@
+using EasyReasy;
+using Microsoft.AspNetCore.Mvc;
 using ReceiptScanner.Models;
-using ReceiptScanner.Services.Ocr;
 using ReceiptScanner.Preprocessing;
 using ReceiptScanner.Preprocessing.Preprocessors;
-using ReceiptScanner.Providers.Models;
-using ReceiptScanner.Providers.Language;
-using Microsoft.AspNetCore.Mvc;
-using EasyReasy;
+using ReceiptScanner.Services.Ocr;
 
 namespace ReceiptScanner.Controllers
 {
@@ -28,15 +26,15 @@ namespace ReceiptScanner.Controllers
             try
             {
                 string htmlContent = await _resourceManager.ReadAsStringAsync(Resources.Frontend.ReceiptScannerFrontend);
-                
+
                 // Get the external URL from forwarded headers, but hardcode https
                 string scheme = "https"; // Hardcoded to fix mixed content
                 string host = Request.Headers["X-Forwarded-Host"].FirstOrDefault() ?? Request.Host.Value;
                 string prefix = Request.Headers["X-Forwarded-Prefix"].FirstOrDefault() ?? "";
-                
+
                 string requestUrl = $"{scheme}://{host}{prefix}";
                 htmlContent = htmlContent.Replace("http://localhost:5001", requestUrl);
-                
+
                 return Content(htmlContent, "text/html");
             }
             catch (Exception ex)
@@ -67,4 +65,4 @@ namespace ReceiptScanner.Controllers
             return await _ocrService.ProcessImageAsync(imageBytes, preprocessingPipeline);
         }
     }
-} 
+}

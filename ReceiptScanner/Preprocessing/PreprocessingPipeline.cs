@@ -30,7 +30,7 @@ namespace ReceiptScanner.Preprocessing
                 foreach (IImagePreprocessor preprocessor in _preprocessors)
                 {
                     Mat processedImage = preprocessor.Preprocess(currentImage);
-                    
+
                     // Dispose the previous image and use the new one
                     currentImage.Dispose();
                     currentImage = processedImage;
@@ -46,4 +46,4 @@ namespace ReceiptScanner.Preprocessing
             }
         }
     }
-} 
+}

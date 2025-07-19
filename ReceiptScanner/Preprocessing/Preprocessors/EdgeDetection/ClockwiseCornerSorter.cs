@@ -22,4 +22,4 @@ namespace ReceiptScanner.Preprocessing.Preprocessors.EdgeDetection
             return new Point[] { sorted[0], sorted[1], sorted[2], sorted[3] };
         }
     }
-} 
+}

@@ -11,4 +11,4 @@ namespace EasyReasy.Tests.TestResourceCollections
     {
         public static readonly Resource TestResource = new Resource("shared-test.txt");
     }
-} 
+}

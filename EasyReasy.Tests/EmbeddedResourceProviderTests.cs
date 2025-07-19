@@ -1,5 +1,3 @@
-using EasyReasy;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Reflection;
 
 namespace EasyReasy.Tests
@@ -69,7 +67,7 @@ namespace EasyReasy.Tests
             Resource testResource = new Resource("nonexistent.txt");
 
             // Act & Assert
-            await Assert.ThrowsExceptionAsync<FileNotFoundException>(() => 
+            await Assert.ThrowsExceptionAsync<FileNotFoundException>(() =>
                 provider.GetResourceStreamAsync(testResource));
         }
 
@@ -112,7 +110,7 @@ namespace EasyReasy.Tests
             Resource testResource = new Resource("nonexistent.txt");
 
             // Act & Assert
-            await Assert.ThrowsExceptionAsync<FileNotFoundException>(() => 
+            await Assert.ThrowsExceptionAsync<FileNotFoundException>(() =>
                 ((IResourceProvider)provider).ReadAsStringAsync(testResource));
         }
 
@@ -124,7 +122,7 @@ namespace EasyReasy.Tests
             Resource testResource = new Resource("nonexistent.txt");
 
             // Act & Assert
-            await Assert.ThrowsExceptionAsync<FileNotFoundException>(() => 
+            await Assert.ThrowsExceptionAsync<FileNotFoundException>(() =>
                 ((IResourceProvider)provider).ReadAsBytesAsync(testResource));
         }
 
@@ -192,4 +190,4 @@ namespace EasyReasy.Tests
             Assert.IsTrue(content.Contains("test binary file"));
         }
     }
-} 
+}

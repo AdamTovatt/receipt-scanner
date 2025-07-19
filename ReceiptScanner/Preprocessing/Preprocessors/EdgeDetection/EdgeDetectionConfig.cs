@@ -10,4 +10,4 @@ namespace ReceiptScanner.Preprocessing.Preprocessors.EdgeDetection
         public double GaussianBlurSigma { get; set; } = 0;
         public double MinContourArea { get; set; } = 1000;
     }
-} 
+}

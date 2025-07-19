@@ -6,11 +6,11 @@ namespace ReceiptScanner.Models
         public Point TopRight { get; set; }
         public Point BottomLeft { get; set; }
         public Point BottomRight { get; set; }
-        
+
         public double Confidence { get; set; }
-        
+
         public bool CornersFound => Confidence >= 0.5;
-        
+
         public CornerDetectionResult()
         {
             TopLeft = new Point();
@@ -19,7 +19,7 @@ namespace ReceiptScanner.Models
             BottomRight = new Point();
             Confidence = 0.0;
         }
-        
+
         public CornerDetectionResult(Point topLeft, Point topRight, Point bottomLeft, Point bottomRight, double confidence)
         {
             TopLeft = topLeft;
@@ -29,4 +29,4 @@ namespace ReceiptScanner.Models
             Confidence = confidence;
         }
     }
-} 
+}

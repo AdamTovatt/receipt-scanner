@@ -1,17 +1,16 @@
+using EasyReasy;
+using EasyReasy.ByteShelfProvider;
+using EasyReasy.EnvironmentVariables;
+using OpenCvSharp;
 using ReceiptScanner.Models;
+using ReceiptScanner.Preprocessing;
 using ReceiptScanner.Preprocessing.Preprocessors;
 using ReceiptScanner.Preprocessing.Preprocessors.EdgeDetection;
-using ReceiptScanner;
-using EasyReasy;
-using EasyReasy.EnvironmentVariables;
-using EasyReasy.ByteShelfProvider;
-using System.Reflection;
-using ReceiptScanner.Preprocessing;
-using ReceiptScanner.Services.Ocr;
 using ReceiptScanner.Providers.Language;
 using ReceiptScanner.Providers.Models;
-using OpenCvSharp;
+using ReceiptScanner.Services.Ocr;
 using ReceiptScanner.Tests.Configuration;
+using System.Reflection;
 
 namespace ReceiptScanner.Tests.Tests
 {

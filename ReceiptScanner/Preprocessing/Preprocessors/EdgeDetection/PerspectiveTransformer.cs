@@ -73,4 +73,4 @@ namespace ReceiptScanner.Preprocessing.Preprocessors.EdgeDetection
             return Math.Sqrt(Math.Pow(p2.X - p1.X, 2) + Math.Pow(p2.Y - p1.Y, 2));
         }
     }
-} 
+}

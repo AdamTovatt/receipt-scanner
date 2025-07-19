@@ -11,4 +11,4 @@ namespace ReceiptScanner.Preprocessing.Preprocessors
             return image.Clone();
         }
     }
-} 
+}
