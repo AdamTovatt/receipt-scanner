@@ -21,7 +21,6 @@ namespace ReceiptScanner.Tests.Tests
     {
         private static ResourceManager _mainProjectResourceManager = null!;
         private static ResourceManager _testProjectResourceManager = null!;
-        private static string _tesseractModelPath = null!;
 
         private static PreprocessingPipeline _preprocessingPipeline = null!;
         private static IOcrService _ocrService = null!;

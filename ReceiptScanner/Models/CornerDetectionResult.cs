@@ -8,6 +8,7 @@ namespace ReceiptScanner.Models
         public Point BottomRight { get; set; }
 
         public double Confidence { get; set; }
+        public string? ErrorMessage { get; set; }
 
         public bool CornersFound => Confidence >= 0.5;
 
@@ -20,13 +21,14 @@ namespace ReceiptScanner.Models
             Confidence = 0.0;
         }
 
-        public CornerDetectionResult(Point topLeft, Point topRight, Point bottomLeft, Point bottomRight, double confidence)
+        public CornerDetectionResult(Point topLeft, Point topRight, Point bottomLeft, Point bottomRight, double confidence, string? errorMessage)
         {
             TopLeft = topLeft;
             TopRight = topRight;
             BottomLeft = bottomLeft;
             BottomRight = bottomRight;
             Confidence = confidence;
+            ErrorMessage = errorMessage;
         }
     }
 }

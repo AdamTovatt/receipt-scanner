@@ -60,7 +60,8 @@ namespace ReceiptScanner.Services.CornerDetection
                     TopRight = new Models.Point(),
                     BottomLeft = new Models.Point(),
                     BottomRight = new Models.Point(),
-                    Confidence = -1.0
+                    Confidence = -1.0,
+                    ErrorMessage = ex.Message,
                 };
             }
         }
