@@ -25,11 +25,19 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Resources\CornerDetection\fastvit_sa24_h_e_bifpn_256_fp32.onnx" />
+    <None Remove="Resources\CornerDetection\fastvit_t8_h_e_bifpn_256_fp32.onnx" />
+    <None Remove="Resources\CornerDetection\lcnet050_p_multi_decoder_l3_d64_256_fp32.onnx" />
+    <None Remove="Resources\CornerDetection\lcnet100_h_e_bifpn_256_fp32.onnx" />
     <None Remove="Resources\Frontend\ReceiptScannerFrontend.html" />
     <None Remove="Resources\ic15_dict.txt" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Resources\CornerDetection\fastvit_sa24_h_e_bifpn_256_fp32.onnx" />
+    <EmbeddedResource Include="Resources\CornerDetection\fastvit_t8_h_e_bifpn_256_fp32.onnx" />
+    <EmbeddedResource Include="Resources\CornerDetection\lcnet050_p_multi_decoder_l3_d64_256_fp32.onnx" />
+    <EmbeddedResource Include="Resources\CornerDetection\lcnet100_h_e_bifpn_256_fp32.onnx" />
     <EmbeddedResource Include="Resources\Frontend\ReceiptScannerFrontend.html" />
   </ItemGroup>
 
