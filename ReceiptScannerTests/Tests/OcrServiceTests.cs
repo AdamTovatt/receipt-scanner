@@ -5,11 +5,13 @@ using OpenCvSharp;
 using ReceiptScanner.Models;
 using ReceiptScanner.Preprocessing;
 using ReceiptScanner.Preprocessing.Preprocessors;
-using ReceiptScanner.Preprocessing.Preprocessors.EdgeDetection;
 using ReceiptScanner.Providers.Language;
 using ReceiptScanner.Providers.Models;
+using ReceiptScanner.Services.CornerDetection;
 using ReceiptScanner.Services.Ocr;
 using ReceiptScanner.Tests.Configuration;
+using ReceiptScannerTests.Extensions;
+using ReceiptScannerTests.Utilities;
 using System.Reflection;
 
 namespace ReceiptScanner.Tests.Tests
@@ -20,6 +22,10 @@ namespace ReceiptScanner.Tests.Tests
         private static ResourceManager _mainProjectResourceManager = null!;
         private static ResourceManager _testProjectResourceManager = null!;
         private static string _tesseractModelPath = null!;
+
+        private static PreprocessingPipeline _preprocessingPipeline = null!;
+        private static IOcrService _ocrService = null!;
+        private static IDebugOutputService _debugOutputService = null!;
 
         [ClassInitialize]
         public static async Task BeforeAll(TestContext testContext)
@@ -41,49 +47,27 @@ namespace ReceiptScanner.Tests.Tests
             Assembly mainProjectAssembly = Assembly.GetAssembly(typeof(Program)) ?? throw new Exception($"Could not find the assembly of {nameof(Program)}");
             _mainProjectResourceManager = await ResourceManager.CreateInstanceAsync(mainProjectAssembly, predefinedByteShelfProvider);
             _testProjectResourceManager = await ResourceManager.CreateInstanceAsync();
+
+            InitializePreprocessingPipeline();
+            InitializeOcrService();
+
+            // Initialize debug output service with automatic path detection
+            _debugOutputService = new LocalFileDebugOutputService();
         }
 
-        [TestMethod]
-        [DynamicData(nameof(GetTestResources), DynamicDataSourceType.Method)]
-        public async Task Preprocess_WithTestReceipt_DetectsAndCropsReceipt(string testResource)
+        private static void InitializePreprocessingPipeline()
         {
-            // Arrange
-            ReceiptEdgeDetectionPreprocessor preprocessor = ReceiptEdgeDetectionFactory.CreateDefault();
-            byte[] imageBytes = await _testProjectResourceManager.ReadAsBytesAsync(new Resource(testResource));
+            ICornerDetectionService cornerDetectionService = new HeatmapCornerDetectionService(_mainProjectResourceManager);
+            CornerDetectionCropPreprocessor cornerDetectionCropPreprocessor = new CornerDetectionCropPreprocessor(cornerDetectionService, 0.5);
+            ThresholdPreprocessor thresholdPreprocessor = new ThresholdPreprocessor();
 
-            // Convert bytes to Mat
-            Mat originalImage = Mat.FromImageData(imageBytes);
-
-            // Act
-            Mat processedImage = preprocessor.Preprocess(originalImage);
-
-            // Assert
-            Assert.IsNotNull(processedImage);
-            Assert.IsFalse(processedImage.Empty());
-
-            // Save the processed image for inspection
-            string outputPath = "ReceiptEdgeDetectionPreprocessorTestOutput.png";
-            processedImage.SaveImage(outputPath);
-            Console.WriteLine($"Processed image saved to: {Path.GetFullPath(outputPath)}");
-
-            // Log image dimensions for comparison
-            Console.WriteLine($"Original image size: {originalImage.Width}x{originalImage.Height}");
-            Console.WriteLine($"Processed image size: {processedImage.Width}x{processedImage.Height}");
-
-            // Cleanup
-            originalImage.Dispose();
-            processedImage.Dispose();
+            _preprocessingPipeline = new PreprocessingPipeline();
+            _preprocessingPipeline.AddPreprocessor(cornerDetectionCropPreprocessor);
+            _preprocessingPipeline.AddPreprocessor(thresholdPreprocessor);
         }
 
-        [TestMethod]
-        [DynamicData(nameof(GetTestResources), DynamicDataSourceType.Method)]
-        public async Task ProcessImageAsync_WithTestReceipt_DetectsText(string testResource)
+        private static void InitializeOcrService()
         {
-            // Arrange
-            PreprocessingPipeline preprocessingPipeline = new PreprocessingPipeline();
-            preprocessingPipeline.AddPreprocessor(new ThresholdPreprocessor());
-
-            // Create real providers
             IModelProviderService modelProvider = new TesseractModelProviderService(
                 _mainProjectResourceManager,
                 Resources.Models.TesseractEnglishModel,
@@ -92,12 +76,34 @@ namespace ReceiptScanner.Tests.Tests
 
             IlanguageProvider languageProvider = new TesseractLanguageProvider("swe", "osd");
 
-            IOcrService predictor = new TesseractOcrService(modelProvider, languageProvider);
+            _ocrService = new TesseractOcrService(modelProvider, languageProvider);
+        }
 
+        [TestMethod]
+        [DynamicData(nameof(GetTestResources), DynamicDataSourceType.Method)]
+        public async Task ProcessImageAsync_WithTestReceipt_DetectsText(string testResource)
+        {
+            // Arrange
             byte[] imageBytes = await _testProjectResourceManager.ReadAsBytesAsync(new Resource(testResource));
+            Mat originalImage = Mat.FromImageData(imageBytes);
+
+            // Preprocess the image separately for debugging
+            Mat preprocessedImage = _preprocessingPipeline.Preprocess(originalImage);
+
+            // Output the original and preprocessed images for debugging
+            string originalImageName = LocalFileDebugOutputService.CreateNameFromCaller(testResource.Replace("/", "_").Replace(".", "_") + "_original");
+            _debugOutputService.OutputImage(originalImage, originalImageName);
+
+            string preprocessedImageName = LocalFileDebugOutputService.CreateNameFromCaller(testResource.Replace("/", "_").Replace(".", "_") + "_preprocessed");
+            _debugOutputService.OutputImage(preprocessedImage, preprocessedImageName);
+
+            // Log image dimensions for debugging
+            Console.WriteLine($"Test resource: {testResource}");
+            Console.WriteLine($"Original image size: {originalImage.Width}x{originalImage.Height}");
+            Console.WriteLine($"Preprocessed image size: {preprocessedImage.Width}x{preprocessedImage.Height}");
 
             // Act
-            OcrResult result = await predictor.ProcessImageAsync(imageBytes, preprocessingPipeline);
+            OcrResult result = await _ocrService.ProcessImageAsync(imageBytes, _preprocessingPipeline);
 
             // Assert
             Assert.IsNotNull(result);
@@ -116,6 +122,10 @@ namespace ReceiptScanner.Tests.Tests
             {
                 Console.WriteLine($"  - '{detection.Text}'");
             }
+
+            // Cleanup
+            originalImage.Dispose();
+            preprocessedImage.Dispose();
         }
 
         public static IEnumerable<object[]> GetTestResources()

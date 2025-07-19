@@ -14,7 +14,7 @@ namespace ReceiptScannerTests.Utilities
             // Get the calling class name to use as the base path
             string callingClassName = GetCallingClassName();
             string assemblyLocation = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
-            _basePath = Path.Combine("DebugOutput", assemblyLocation, callingClassName);
+            _basePath = Path.Combine(assemblyLocation, "DebugOutput", callingClassName);
 
             Directory.CreateDirectory(_basePath);
         }
@@ -49,6 +49,15 @@ namespace ReceiptScannerTests.Utilities
 
             // Cleanup
             outputImage.Dispose();
+        }
+
+        public void OutputImage(Mat image, string imageName)
+        {
+            // Save the image directly without any modifications
+            string outputPath = Path.Combine(_basePath, $"{imageName}.png");
+            image.SaveImage(outputPath);
+
+            Console.WriteLine($"Debug image saved to: {outputPath}");
         }
 
         public static string CreateNameFromCaller(string suffix)
