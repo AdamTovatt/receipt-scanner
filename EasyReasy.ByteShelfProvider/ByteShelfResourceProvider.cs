@@ -41,20 +41,65 @@ namespace EasyReasy.ByteShelfProvider
             return cache;
         }
 
+        /// <summary>
+        /// Checks if the cached version of a resource is stale and needs to be updated.
+        /// </summary>
+        /// <param name="resource">The resource to check.</param>
+        /// <returns>True if the cache is stale and should be updated; otherwise, false.</returns>
+        public async Task<bool> IsCacheStaleAsync(Resource resource)
+        {
+            return await ShouldInvalidateCacheAsync(resource);
+        }
+
+        /// <summary>
+        /// Updates the cache with the latest version of the resource.
+        /// </summary>
+        /// <param name="resource">The resource to update in cache.</param>
+        /// <returns>A task that represents the asynchronous cache update operation.</returns>
+        public async Task UpdateCacheAsync(Resource resource)
+        {
+            if (cache == null)
+                return;
+
+            // Download the latest version from ByteShelf
+            (string? subTenantId, string fileName) = await ResolveSubTenantAndFileName(resource.Path);
+
+            IEnumerable<ShelfFileMetadata> files = subTenantId == null
+                ? await shelfProvider.GetFilesAsync()
+                : await shelfProvider.GetFilesForTenantAsync(subTenantId);
+
+            ShelfFileMetadata? file = files
+                .Where(f => string.Equals(f.OriginalFilename, fileName, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(f => f.CreatedAt)
+                .FirstOrDefault();
+
+            if (file == null)
+                throw new FileNotFoundException($"File '{resource.Path}' not found in ByteShelf.");
+
+            ShelfFile shelfFile = subTenantId == null
+                ? await shelfProvider.ReadFileAsync(file.Id)
+                : await shelfProvider.ReadFileForTenantAsync(subTenantId, file.Id);
+
+            using (Stream contentStream = shelfFile.GetContentStream())
+            {
+                // Store the updated content in cache
+                await cache.StoreAsync(resource.Path, contentStream);
+            }
+        }
+
         public async Task<bool> ResourceExistsAsync(Resource resource)
         {
-            // First check if it exists in cache
+            // First check if it exists in cache and is not stale
             if (cache != null)
             {
                 if (await cache.ExistsAsync(resource.Path))
                 {
                     // Check if we need to invalidate the cache
-                    if (await ShouldInvalidateCacheAsync(resource))
+                    if (!await IsCacheStaleAsync(resource))
                     {
-                        // Cache is stale, but the file still exists in ByteShelf
                         return true;
                     }
-                    return true;
+                    // Cache is stale, treat as non-existent and check ByteShelf below
                 }
             }
 
@@ -77,7 +122,7 @@ namespace EasyReasy.ByteShelfProvider
                 if (await cache.ExistsAsync(resource.Path))
                 {
                     // Check if we need to invalidate the cache
-                    if (!await ShouldInvalidateCacheAsync(resource))
+                    if (!await IsCacheStaleAsync(resource))
                     {
                         return await cache.GetStreamAsync(resource.Path);
                     }

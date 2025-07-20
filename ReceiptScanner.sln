@@ -1,3 +1,4 @@
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -6,17 +7,21 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReceiptScanner", "ReceiptSc
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReceiptScanner.Tests", "ReceiptScannerTests\ReceiptScanner.Tests.csproj", "{7AB0F2EF-A283-494F-AB06-8188DD73AAB1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyReasy", "EasyReasy\EasyReasy.csproj", "{8FA464C6-A46B-446E-836D-2A6C96323D84}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasyReasy", "EasyReasy\EasyReasy.csproj", "{8FA464C6-A46B-446E-836D-2A6C96323D84}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyReasy.ByteShelfProvider", "EasyReasy.ByteShelfProvider\EasyReasy.ByteShelfProvider.csproj", "{471EE253-479A-413B-B2A7-F878601B4ADD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasyReasy.ByteShelfProvider", "EasyReasy.ByteShelfProvider\EasyReasy.ByteShelfProvider.csproj", "{471EE253-479A-413B-B2A7-F878601B4ADD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyReasy.EnvironmentVariables", "EasyReasy.EnvironmentVariable\EasyReasy.EnvironmentVariables.csproj", "{D4D025AC-08F9-493B-8D9E-8595DA3C5BE1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasyReasy.EnvironmentVariables", "EasyReasy.EnvironmentVariable\EasyReasy.EnvironmentVariables.csproj", "{D4D025AC-08F9-493B-8D9E-8595DA3C5BE1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyReasy.EnvironmentVariables.Tests", "EasyReasy.EnvironmentVariable.Tests\EasyReasy.EnvironmentVariables.Tests.csproj", "{43D3A48B-F84C-44BA-B52C-D839F6721995}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasyReasy.EnvironmentVariables.Tests", "EasyReasy.EnvironmentVariable.Tests\EasyReasy.EnvironmentVariables.Tests.csproj", "{43D3A48B-F84C-44BA-B52C-D839F6721995}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyReasy.Tests", "EasyReasy.Tests\EasyReasy.Tests.csproj", "{927D4699-4038-457A-9A66-6F79B61EC068}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasyReasy.Tests", "EasyReasy.Tests\EasyReasy.Tests.csproj", "{927D4699-4038-457A-9A66-6F79B61EC068}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyReasy.ByteShelfProvider.Tests", "EasyReasy.ByteShelfProvider.Tests\EasyReasy.ByteShelfProvider.Tests.csproj", "{4E1F8603-33EB-47C1-8C1D-F279AAEECBE8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasyReasy.ByteShelfProvider.Tests", "EasyReasy.ByteShelfProvider.Tests\EasyReasy.ByteShelfProvider.Tests.csproj", "{4E1F8603-33EB-47C1-8C1D-F279AAEECBE8}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasyReasy.OcrClient", "EasyReasy.OcrClient\EasyReasy.OcrClient.csproj", "{8D3A3D1F-12AC-4427-95B8-0A77DAB7406C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasyReasy.OcrClient.Tests", "EasyReasy.OcrClient.Tests\EasyReasy.OcrClient.Tests.csproj", "{90CF8A89-A1F3-4980-A6A1-6D5A17857324}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -56,6 +61,14 @@ Global
 		{4E1F8603-33EB-47C1-8C1D-F279AAEECBE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4E1F8603-33EB-47C1-8C1D-F279AAEECBE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4E1F8603-33EB-47C1-8C1D-F279AAEECBE8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D3A3D1F-12AC-4427-95B8-0A77DAB7406C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D3A3D1F-12AC-4427-95B8-0A77DAB7406C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D3A3D1F-12AC-4427-95B8-0A77DAB7406C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D3A3D1F-12AC-4427-95B8-0A77DAB7406C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{90CF8A89-A1F3-4980-A6A1-6D5A17857324}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{90CF8A89-A1F3-4980-A6A1-6D5A17857324}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{90CF8A89-A1F3-4980-A6A1-6D5A17857324}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{90CF8A89-A1F3-4980-A6A1-6D5A17857324}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

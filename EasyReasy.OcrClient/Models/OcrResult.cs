@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace ReceiptScanner.Models
+namespace EasyReasy.OcrClient.Models
 {
     public class OcrResult
     {
@@ -10,4 +10,4 @@ namespace ReceiptScanner.Models
         [JsonPropertyName("error")]
         public string? Error { get; set; }
     }
-}
+} 
